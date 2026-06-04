@@ -24,8 +24,7 @@ export async function POST(req: Request) {
     });
 
     return Response.json({ ok: true });
-  } catch (e) {
-    console.error("Login error:", e);
-    return Response.json({ error: "Server error", detail: String(e) }, { status: 500 });
+  } catch {
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
