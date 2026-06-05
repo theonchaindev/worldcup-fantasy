@@ -11,7 +11,7 @@ const scoring = [
   ["Playing 90 min", "+2"], ["Captain", "×2"],
 ];
 
-function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+function FadeIn({ children, delay = 0, className = "", style }: { children: React.ReactNode; delay?: number; className?: string; style?: React.CSSProperties }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   return (
@@ -19,8 +19,9 @@ function FadeIn({ children, delay = 0, className = "" }: { children: React.React
       ref={ref}
       initial={{ opacity: 0, y: 16 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      transition={{ duration: 0.4, delay }}
       className={className}
+      style={style}
     >
       {children}
     </motion.div>
