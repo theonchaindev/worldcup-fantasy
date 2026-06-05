@@ -1,26 +1,19 @@
 import { prisma } from "@/lib/prisma";
 
-const cache = new Map<string, { url: string; ts: number }>();
-const TTL = 1000 * 60 * 60 * 24; // 24h
+const posColors: Record<string, { bg: string; fg: string }> = {
+  GK:  { bg: "#2d1a00", fg: "#f59e0b" },
+  DEF: { bg: "#0a1f0a", fg: "#22c55e" },
+  MID: { bg: "#0a0f1f", fg: "#3b82f6" },
+  FWD: { bg: "#1f0a0a", fg: "#ef4444" },
+};
 
-async function resolveImageUrl(name: string): Promise<string | null> {
-  const cached = cache.get(name);
-  if (cached && Date.now() - cached.ts < TTL) return cached.url;
-
-  try {
-    const res = await fetch(
-      `https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p=${encodeURIComponent(name)}`,
-      { next: { revalidate: 86400 } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const player = data?.player?.[0];
-    const url: string | null = player?.strCutout || player?.strThumb || null;
-    if (url) cache.set(name, { url, ts: Date.now() });
-    return url;
-  } catch {
-    return null;
-  }
+function makeSVG(initials: string, position: string): string {
+  const { bg, fg } = posColors[position] || { bg: "#111", fg: "#f0b429" };
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <circle cx="40" cy="40" r="40" fill="${bg}"/>
+  <circle cx="40" cy="40" r="39" fill="none" stroke="${fg}" stroke-width="1.5" opacity="0.4"/>
+  <text x="40" y="51" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="800" fill="${fg}" letter-spacing="-1">${initials}</text>
+</svg>`;
 }
 
 export async function GET(
@@ -29,38 +22,42 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  // id is the player DB id
   const player = await prisma.player.findUnique({
     where: { id },
-    select: { name: true, sofifaId: true },
+    select: { name: true, position: true, sofifaId: true },
   });
 
-  if (!player) return new Response(null, { status: 404 });
-
-  // sofifaId stores a direct image URL if it starts with http
-  let imageUrl: string | null = null;
-  if (player.sofifaId?.startsWith("http")) {
-    imageUrl = player.sofifaId;
-  } else {
-    imageUrl = await resolveImageUrl(player.name);
+  // If sofifaId is a direct image URL, proxy it with a short timeout
+  if (player?.sofifaId?.startsWith("http")) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 1500);
+      const res = await fetch(player.sofifaId, { signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0" } });
+      clearTimeout(timer);
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        return new Response(buf, {
+          headers: {
+            "Content-Type": res.headers.get("Content-Type") || "image/jpeg",
+            "Cache-Control": "public, max-age=86400",
+          },
+        });
+      }
+    } catch {
+      // fall through to SVG
+    }
   }
 
-  if (!imageUrl) return new Response(null, { status: 404 });
+  // Return instant SVG avatar — no external calls
+  const name = player?.name || "??";
+  const pos = player?.position || "MID";
+  const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+  const svg = makeSVG(initials, pos);
 
-  try {
-    const imgRes = await fetch(imageUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; bot/1.0)" },
-      next: { revalidate: 86400 },
-    });
-    if (!imgRes.ok) return new Response(null, { status: 404 });
-    const buf = await imgRes.arrayBuffer();
-    return new Response(buf, {
-      headers: {
-        "Content-Type": imgRes.headers.get("Content-Type") || "image/png",
-        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
-      },
-    });
-  } catch {
-    return new Response(null, { status: 502 });
-  }
+  return new Response(svg, {
+    headers: {
+      "Content-Type": "image/svg+xml",
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
 }
