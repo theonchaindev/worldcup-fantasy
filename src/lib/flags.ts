@@ -35,6 +35,20 @@ export const countryFlags: Record<string, string> = {
   "Saudi Arabia": "🇸🇦",
   "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
   "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+  "Austria": "🇦🇹",
+  "Turkey": "🇹🇷",
+  "Chile": "🇨🇱",
+  "South Africa": "🇿🇦",
+  "Algeria": "🇩🇿",
+  "Iraq": "🇮🇶",
+  "Panama": "🇵🇦",
+  "Honduras": "🇭🇳",
+  "Costa Rica": "🇨🇷",
+  "New Zealand": "🇳🇿",
+  "Venezuela": "🇻🇪",
+  "Paraguay": "🇵🇾",
+  "Uzbekistan": "🇺🇿",
+  "Jordan": "🇯🇴",
 };
 
 export function getFlag(country: string): string {
