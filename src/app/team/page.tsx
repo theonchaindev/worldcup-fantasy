@@ -95,6 +95,11 @@ export default function TeamPage() {
 
   function pickPlayer(player: Player) {
     if (!activeSlot) return;
+    // Prevent position mismatch — player must match slot position
+    if (activeSlot.position && player.position !== activeSlot.position) {
+      setMessage({ type: "err", text: `This slot requires a ${activeSlot.position} — ${player.name} is a ${player.position}` });
+      return;
+    }
     const curr = activeSlot.playerId ? allPlayers.find(p => p.id === activeSlot.playerId) : null;
     const newTotal = totalValue - (curr?.value || 0) + player.value;
     if (newTotal > 100) { setMessage({ type: "err", text: `Over budget by £${(newTotal - 100).toFixed(1)}m` }); return; }
@@ -178,16 +183,37 @@ export default function TeamPage() {
 
   async function saveTeam() {
     if (selectedIds.length !== 15) { setMessage({ type: "err", text: "Pick all 15 players first" }); return; }
-    if (!captainId) { setMessage({ type: "err", text: "Set a captain — click a player on the pitch" }); return; }
-    if (!viceCaptainId) { setMessage({ type: "err", text: "Set a vice-captain" }); return; }
+
+    // Auto-assign captain/VC if not set — pick highest-value starters
+    const startersByValue = slots
+      .filter(s => !s.isSub && s.playerId)
+      .map(s => ({ slotId: s.slot, player: allPlayers.find(p => p.id === s.playerId)! }))
+      .filter(x => x.player)
+      .sort((a, b) => b.player.value - a.player.value);
+
+    const resolvedCaptain = captainId || startersByValue[0]?.player.id || null;
+    const resolvedVC = viceCaptainId || startersByValue.find(x => x.player.id !== resolvedCaptain)?.player.id || null;
+
+    if (!resolvedCaptain) { setMessage({ type: "err", text: "Pick all 15 players first" }); return; }
+
     setSaving(true);
     const res = await fetch("/api/team", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ formation, captainId, viceCaptainId, players: slots.filter(s => s.playerId).map(s => ({ playerId: s.playerId, isSub: s.isSub, slot: s.slot })) }),
+      body: JSON.stringify({
+        formation, captainId: resolvedCaptain, viceCaptainId: resolvedVC,
+        players: slots.filter(s => s.playerId).map(s => ({ playerId: s.playerId, isSub: s.isSub, slot: s.slot })),
+      }),
     });
     const data = await res.json();
-    if (res.ok) { setMessage({ type: "ok", text: "Team saved!" }); setSaved(true); setTimeout(() => setSaved(false), 2000); }
-    else setMessage({ type: "err", text: data.detail ? `${data.error}: ${data.detail}` : data.error });
+    if (res.ok) {
+      setCaptainId(resolvedCaptain);
+      setViceCaptainId(resolvedVC);
+      setMessage({ type: "ok", text: "Team saved!" });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } else {
+      setMessage({ type: "err", text: data.detail ? `${data.error}: ${data.detail}` : data.error });
+    }
     setSaving(false);
   }
 
@@ -389,20 +415,25 @@ export default function TeamPage() {
                 />
               </div>
 
-              {/* Position filter tabs */}
+              {/* Position filter tabs — locked to active slot position when a slot is selected */}
               <div style={{ display: "flex", gap: "0.25rem" }}>
-                {["ALL", "GK", "DEF", "MID", "FWD"].map(pos => (
-                  <button key={pos} onClick={() => setFilterPos(pos)} style={{
+                {["ALL", "GK", "DEF", "MID", "FWD"].map(pos => {
+                  const isLocked = activeSlot?.position && pos !== "ALL" && pos !== activeSlot.position;
+                  return (
+                  <button key={pos} onClick={() => !isLocked && setFilterPos(pos)} style={{
                     flex: 1, padding: "0.3rem 0", fontSize: "0.7rem", fontWeight: 700,
                     border: `1px solid ${filterPos === pos ? (posColor[pos] || "var(--primary)") : "var(--border-subtle)"}`,
                     borderRadius: "var(--r-sm)",
                     background: filterPos === pos ? (pos === "ALL" ? "var(--primary-bg)" : `${posColor[pos]}18`) : "transparent",
                     color: filterPos === pos ? (posColor[pos] || "var(--primary)") : "var(--ink-3)",
-                    cursor: "pointer", transition: "all 120ms"
+                    cursor: isLocked ? "not-allowed" : "pointer",
+                    opacity: isLocked ? 0.3 : 1,
+                    transition: "all 120ms"
                   }}>
                     {pos}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
