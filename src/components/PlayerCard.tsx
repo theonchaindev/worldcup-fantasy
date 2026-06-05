@@ -1,5 +1,7 @@
 "use client";
+import { motion } from "framer-motion";
 import { getFlag } from "@/lib/flags";
+import { X } from "lucide-react";
 
 interface Player {
   id: string;
@@ -22,6 +24,7 @@ interface Props {
   onClick?: () => void;
   onRemove?: () => void;
   compact?: boolean;
+  animDelay?: number;
 }
 
 const positionColors: Record<string, string> = {
@@ -31,138 +34,247 @@ const positionColors: Record<string, string> = {
   FWD: "#ef4444",
 };
 
-export function PlayerImage({ player, size = 64 }: { player: Player; size?: number }) {
-  const imageUrl = player.sofifaId
-    ? `https://cdn.sofifa.net/players/${player.sofifaId}/25_120x120.png`
-    : null;
-
-  if (imageUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={imageUrl}
-        alt={player.name}
-        width={size}
-        height={size}
-        className="rounded-full object-cover"
-        style={{ width: size, height: size, background: "#0d1f3c" }}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.style.display = "none";
-          const parent = target.parentElement;
-          if (parent) {
-            const fallback = parent.querySelector(".fallback-avatar") as HTMLElement;
-            if (fallback) fallback.style.display = "flex";
-          }
-        }}
-      />
-    );
-  }
-  return null;
-}
-
-export default function PlayerCard({ player, isCaptain, isViceCaptain, isSub, onClick, onRemove, compact }: Props) {
+export function PlayerAvatar({
+  player,
+  size = 56,
+}: {
+  player: Player;
+  size?: number;
+}) {
   const posColor = positionColors[player.position] || "#f0b429";
-  const imageUrl = player.sofifaId
-    ? `https://cdn.sofifa.net/players/${player.sofifaId}/25_120x120.png`
+  const proxyUrl = player.sofifaId
+    ? `/api/player-image/${player.sofifaId}`
     : null;
-
-  if (compact) {
-    return (
-      <div
-        onClick={onClick}
-        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all hover:bg-white/5"
-        style={{ border: "1px solid rgba(240,180,41,0.1)" }}
-      >
-        <div className="relative flex-shrink-0">
-          <div className="rounded-full overflow-hidden" style={{ width: 44, height: 44, background: "#0d1f3c" }}>
-            {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageUrl} alt={player.name} width={44} height={44} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ color: posColor }}>
-                {player.name.charAt(0)}
-              </div>
-            )}
-          </div>
-          <span className="absolute -bottom-1 -right-1 text-xs font-bold px-1 rounded" style={{ background: posColor, color: "#000", fontSize: "0.6rem" }}>
-            {player.position}
-          </span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm truncate text-white">{player.name}</div>
-          <div className="text-xs text-slate-400">{getFlag(player.country)} {player.country}</div>
-        </div>
-        <div className="text-right">
-          <div className="font-bold text-sm" style={{ color: "#f0b429" }}>£{player.value}m</div>
-          <div className="text-xs text-slate-400">{player.totalPoints} pts</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
-      className={`player-token relative flex flex-col items-center text-center group ${isSub ? "opacity-80" : ""}`}
-      onClick={onClick}
+      className="relative rounded-full overflow-hidden flex-shrink-0"
+      style={{ width: size, height: size, background: "#0a1e38" }}
     >
-      {/* Captain/VC badge */}
-      {isCaptain && (
-        <div className="absolute -top-2 -right-2 z-10 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black" style={{ background: "#f0b429", color: "#050d1a" }}>
-          C
-        </div>
-      )}
-      {isViceCaptain && (
-        <div className="absolute -top-2 -right-2 z-10 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black bg-slate-400" style={{ color: "#050d1a" }}>
-          V
-        </div>
-      )}
-
-      {/* Player image */}
+      {proxyUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={proxyUrl}
+          alt={player.name}
+          width={size}
+          height={size}
+          className="w-full h-full object-cover object-top"
+          onError={(e) => {
+            const t = e.target as HTMLImageElement;
+            t.style.display = "none";
+            const fb = t.nextElementSibling as HTMLElement | null;
+            if (fb) fb.style.display = "flex";
+          }}
+        />
+      ) : null}
       <div
-        className={`relative rounded-full overflow-hidden mb-1 ${isCaptain ? "captain-ring" : isViceCaptain ? "vice-ring" : ""}`}
-        style={{ width: 56, height: 56, background: "#0d2a4a", border: `2px solid ${posColor}40` }}
+        className="absolute inset-0 items-center justify-center font-black text-sm"
+        style={{
+          display: proxyUrl ? "none" : "flex",
+          color: posColor,
+          background: `${posColor}18`,
+        }}
       >
-        {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt={player.name} width={56} height={56} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-lg font-black" style={{ color: posColor }}>
-            {player.name.charAt(0)}
-          </div>
-        )}
+        {player.name
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .slice(0, 2)}
       </div>
+    </div>
+  );
+}
 
-      {/* Name tag */}
-      <div
-        className="px-2 py-0.5 rounded-md text-center"
-        style={{ background: "rgba(5,13,26,0.85)", border: `1px solid ${posColor}50`, maxWidth: 80 }}
+export function PlayerRow({
+  player,
+  onClick,
+  rank,
+}: {
+  player: Player;
+  onClick?: () => void;
+  rank?: number;
+}) {
+  const posColor = positionColors[player.position] || "#f0b429";
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ backgroundColor: "rgba(255,255,255,0.04)" }}
+      whileTap={{ scale: 0.99 }}
+      className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
+      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+    >
+      {rank && (
+        <span className="text-xs text-slate-500 w-5 text-center flex-shrink-0">
+          {rank}
+        </span>
+      )}
+      <PlayerAvatar player={player} size={40} />
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-white text-sm truncate">
+          {player.name}
+        </div>
+        <div className="text-xs text-slate-400">
+          {getFlag(player.country)} {player.clubTeam}
+        </div>
+      </div>
+      <span
+        className="text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0"
+        style={{
+          background: `${posColor}20`,
+          color: posColor,
+        }}
       >
-        <div className="text-white font-semibold truncate" style={{ fontSize: "0.6rem", maxWidth: 72 }}>
-          {player.name.split(" ").slice(-1)[0]}
-        </div>
-        <div className="font-bold" style={{ color: "#f0b429", fontSize: "0.55rem" }}>
-          £{player.value}m
-        </div>
-      </div>
+        {player.position}
+      </span>
+      <span className="font-bold text-yellow-400 text-sm flex-shrink-0">
+        £{player.value}m
+      </span>
+    </motion.button>
+  );
+}
 
-      {/* Points badge */}
-      {player.totalPoints > 0 && (
-        <div className="mt-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(240,180,41,0.2)", color: "#f0b429", fontSize: "0.55rem" }}>
-          {player.totalPoints} pts
-        </div>
+export default function PlayerCard({
+  player,
+  isCaptain,
+  isViceCaptain,
+  isSub,
+  onClick,
+  onRemove,
+  animDelay = 0,
+}: Props) {
+  const posColor = positionColors[player.position] || "#f0b429";
+  const proxyUrl = player.sofifaId
+    ? `/api/player-image/${player.sofifaId}`
+    : null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.7, y: 12 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{
+        delay: animDelay,
+        duration: 0.4,
+        type: "spring",
+        stiffness: 220,
+        damping: 22,
+      }}
+      whileHover={{ scale: isSub ? 1.03 : 1.05, zIndex: 10 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={onClick}
+      className="relative flex flex-col items-center text-center cursor-pointer select-none"
+      style={{ opacity: isSub ? 0.85 : 1 }}
+    >
+      {/* Captain / VC badge */}
+      {(isCaptain || isViceCaptain) && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="absolute -top-2 -right-1 z-20 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black shadow-lg"
+          style={{
+            background: isCaptain ? "#f0b429" : "#94a3b8",
+            color: "#050d1a",
+          }}
+        >
+          {isCaptain ? "C" : "V"}
+        </motion.div>
       )}
 
       {/* Remove button */}
       {onRemove && (
         <button
-          onClick={(e) => { e.stopPropagation(); onRemove(); }}
-          className="absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ background: "#ef4444", color: "white", fontSize: "0.6rem", fontWeight: "bold" }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="absolute -top-1 -left-1 z-20 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
+          style={{ background: "#ef4444", color: "white" }}
         >
-          ×
+          <X size={9} />
         </button>
       )}
-    </div>
+
+      {/* Photo */}
+      <div
+        className="relative rounded-full overflow-hidden mb-1.5"
+        style={{
+          width: 54,
+          height: 54,
+          background: "#0a1e38",
+          border: `2px solid ${isCaptain ? "#f0b429" : isViceCaptain ? "#94a3b8" : `${posColor}60`}`,
+          boxShadow: isCaptain
+            ? "0 0 12px rgba(240,180,41,0.5)"
+            : isViceCaptain
+            ? "0 0 8px rgba(148,163,184,0.4)"
+            : "none",
+        }}
+      >
+        {proxyUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={proxyUrl}
+            alt={player.name}
+            width={54}
+            height={54}
+            className="w-full h-full object-cover object-top"
+            onError={(e) => {
+              const t = e.target as HTMLImageElement;
+              t.style.display = "none";
+              const fb = t.nextElementSibling as HTMLElement | null;
+              if (fb) fb.style.display = "flex";
+            }}
+          />
+        ) : null}
+        <div
+          className="absolute inset-0 items-center justify-center font-black text-base"
+          style={{
+            display: proxyUrl ? "none" : "flex",
+            color: posColor,
+            background: `${posColor}18`,
+          }}
+        >
+          {player.name
+            .split(" ")
+            .map((w) => w[0])
+            .join("")
+            .slice(0, 2)}
+        </div>
+      </div>
+
+      {/* Name tag */}
+      <div
+        className="px-1.5 py-0.5 rounded-md"
+        style={{
+          background: "rgba(5,13,26,0.9)",
+          border: `1px solid ${posColor}40`,
+          maxWidth: 76,
+        }}
+      >
+        <div
+          className="font-bold text-white truncate"
+          style={{ fontSize: "0.58rem", maxWidth: 68 }}
+        >
+          {player.name.split(" ").slice(-1)[0].toUpperCase()}
+        </div>
+        <div
+          className="font-semibold"
+          style={{ color: "#f0b429", fontSize: "0.52rem" }}
+        >
+          £{player.value}m
+        </div>
+      </div>
+
+      {player.totalPoints > 0 && (
+        <div
+          className="mt-0.5 font-bold px-1.5 rounded-full"
+          style={{
+            background: "rgba(240,180,41,0.18)",
+            color: "#f0b429",
+            fontSize: "0.5rem",
+          }}
+        >
+          {player.totalPoints} pts
+        </div>
+      )}
+    </motion.div>
   );
 }
