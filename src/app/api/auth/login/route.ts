@@ -24,9 +24,7 @@ export async function POST(req: Request) {
     });
 
     return Response.json({ ok: true });
-  } catch (e) {
-    const msg = String(e);
-    console.error("Login error:", msg);
-    return Response.json({ error: "Server error", detail: msg.slice(0, 200) }, { status: 500 });
+  } catch {
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

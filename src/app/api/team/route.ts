@@ -37,9 +37,9 @@ export async function POST(req: Request) {
     if (!positions.includes("MID")) return Response.json({ error: "Squad needs a MID sub" }, { status: 400 });
     if (!positions.includes("FWD")) return Response.json({ error: "Squad needs a FWD sub" }, { status: 400 });
 
-    // Validate budget
-    const totalValue = playerData.reduce((sum, p) => sum + p.value, 0);
-    if (totalValue > 100) {
+    // Validate budget (0.1 tolerance for floating point)
+    const totalValue = playerData.reduce((sum, p) => sum + Number(p.value), 0);
+    if (totalValue > 100.1) {
       return Response.json({ error: `Squad value £${totalValue.toFixed(1)}m exceeds £100m budget` }, { status: 400 });
     }
 

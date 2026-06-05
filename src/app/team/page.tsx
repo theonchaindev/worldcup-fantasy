@@ -253,6 +253,26 @@ export default function TeamPage() {
 
       <div className="max-w-7xl mx-auto px-4" style={{ paddingTop: "1.5rem", paddingBottom: "4rem" }}>
 
+        {/* Club name heading */}
+        {user?.clubName && (
+          <div style={{ marginBottom: "1.5rem" }}>
+            <h1 style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 800,
+              fontSize: "clamp(2rem, 5vw, 3.5rem)",
+              color: "var(--ink)",
+              lineHeight: 1,
+              letterSpacing: "-0.02em",
+              textTransform: "uppercase",
+            }}>
+              {user.clubName}
+            </h1>
+            <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", marginTop: "0.35rem" }}>
+              Squad builder · {selectedIds.length}/15 players · £{remaining.toFixed(1)}m remaining
+            </p>
+          </div>
+        )}
+
         {/* Top controls */}
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.75rem", marginBottom: "1rem" }}>
           <div style={{ position: "relative" }}>
