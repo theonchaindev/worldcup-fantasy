@@ -114,17 +114,65 @@ export default function TeamPage() {
   }
 
   const autoPick = useCallback(() => {
-    const sorted = [...allPlayers].sort((a, b) => b.value - a.value);
-    const newSlots = buildSlots(formation); let budget = 100;
-    for (const slot of newSlots) {
-      if (!slot.position) continue;
-      const eligible = sorted.filter(p => p.position === slot.position && !newSlots.some(s => s.playerId === p.id) && p.value <= budget - (newSlots.filter(s => !s.playerId).length - 1) * 1.5);
-      if (eligible[0]) { slot.playerId = eligible[0].id; budget -= eligible[0].value; }
+    const { def, mid, fwd } = formations[formation] || formations["4-3-3"];
+    // Order matters: fill subs first so we reserve minimum budget for them,
+    // then fill starters with the remainder
+    const slotOrder: { pos: string; isSub: boolean }[] = [
+      { pos: "GK", isSub: true }, { pos: "DEF", isSub: true },
+      { pos: "MID", isSub: true }, { pos: "FWD", isSub: true },
+      { pos: "GK", isSub: false },
+      ...Array(def).fill(null).map(() => ({ pos: "DEF", isSub: false })),
+      ...Array(mid).fill(null).map(() => ({ pos: "MID", isSub: false })),
+      ...Array(fwd).fill(null).map(() => ({ pos: "FWD", isSub: false })),
+    ];
+
+    const newSlots = buildSlots(formation);
+    const picked: string[] = [];
+    let budget = 100;
+    const totalSlots = 15;
+
+    for (let i = 0; i < slotOrder.length; i++) {
+      const { pos, isSub } = slotOrder[i];
+      const slotsRemaining = totalSlots - i - 1;
+      const minForRest = slotsRemaining * 3.5; // cheapest possible for remaining
+      const maxSpend = budget - minForRest;
+
+      // Get eligible players for this slot: right position, not yet picked, affordable
+      const pool = allPlayers.filter(p =>
+        p.position === pos &&
+        !picked.includes(p.id) &&
+        p.value <= maxSpend
+      );
+
+      if (pool.length === 0) continue;
+
+      // Pick randomly from the pool (weighted slightly toward mid-range, not pure random)
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      const chosen = shuffled[0];
+
+      picked.push(chosen.id);
+      budget -= chosen.value;
+
+      // Assign to the correct slot
+      const targetSlot = newSlots.find(s =>
+        s.position === pos &&
+        s.isSub === isSub &&
+        !s.playerId
+      );
+      if (targetSlot) targetSlot.playerId = chosen.id;
     }
+
     setSlots(newSlots);
-    setCaptainId(newSlots.find(s => !s.isSub && s.position === "FWD")?.playerId || null);
-    setViceCaptainId(newSlots.filter(s => !s.isSub && s.position === "FWD")[1]?.playerId || null);
-    setMessage({ type: "ok", text: "Auto-pick done!" });
+    // Set captain to highest-value starter FWD or MID
+    const starters = newSlots.filter(s => !s.isSub && s.playerId);
+    const byValue = [...starters].sort((a, b) => {
+      const pA = allPlayers.find(p => p.id === a.playerId);
+      const pB = allPlayers.find(p => p.id === b.playerId);
+      return (pB?.value || 0) - (pA?.value || 0);
+    });
+    setCaptainId(byValue[0]?.playerId || null);
+    setViceCaptainId(byValue[1]?.playerId || null);
+    setMessage({ type: "ok", text: `Auto-pick done — £${(100 - budget).toFixed(1)}m spent` });
     setActiveSlot(null);
   }, [allPlayers, formation]);
 
