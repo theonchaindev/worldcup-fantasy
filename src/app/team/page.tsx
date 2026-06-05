@@ -187,7 +187,7 @@ export default function TeamPage() {
     });
     const data = await res.json();
     if (res.ok) { setMessage({ type: "ok", text: "Team saved!" }); setSaved(true); setTimeout(() => setSaved(false), 2000); }
-    else setMessage({ type: "err", text: data.error });
+    else setMessage({ type: "err", text: data.detail ? `${data.error}: ${data.detail}` : data.error });
     setSaving(false);
   }
 

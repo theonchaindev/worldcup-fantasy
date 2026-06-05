@@ -81,6 +81,6 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   } catch (e) {
     console.error(e);
-    return Response.json({ error: "Failed to save team" }, { status: 500 });
+    return Response.json({ error: "Failed to save team", detail: String(e).slice(0, 300) }, { status: 500 });
   }
 }
