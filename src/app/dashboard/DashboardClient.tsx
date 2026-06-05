@@ -19,7 +19,7 @@ const chipInfo: Record<string, { label: string }> = {
 };
 
 function stagger(i: number) {
-  return { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: i * 0.06, duration: 0.35, ease: "easeOut" } };
+  return { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: i * 0.06, duration: 0.35 } };
 }
 
 export default function DashboardClient({ user, stats, team, captainName, topScorers, chips, gameweek }: {
