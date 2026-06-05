@@ -1,19 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import NavBar from "@/components/NavBar";
-import { ArrowLeftRight, Search, CheckCircle } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 import { getFlag } from "@/lib/flags";
+import { motion } from "framer-motion";
 
-interface Player {
-  id: string; name: string; position: string; country: string; clubTeam: string;
-  value: number; totalPoints: number; sofifaId?: string | null;
-}
+interface Player { id: string; name: string; position: string; country: string; clubTeam: string; value: number; totalPoints: number; sofifaId?: string | null; }
+interface UserPlayer { slot: number; isSub: boolean; player: Player; }
 
-interface UserPlayer {
-  slot: number; isSub: boolean; player: Player;
-}
-
-const posColors: Record<string, string> = { GK: "#f59e0b", DEF: "#22c55e", MID: "#3b82f6", FWD: "#ef4444" };
+const posColors: Record<string, string> = { GK: "oklch(0.72 0.15 75)", DEF: "oklch(0.62 0.17 145)", MID: "oklch(0.60 0.17 230)", FWD: "oklch(0.60 0.21 25)" };
+const posClass: Record<string, string> = { GK: "pos-gk", DEF: "pos-def", MID: "pos-mid", FWD: "pos-fwd" };
 
 export default function TransfersPage() {
   const [user, setUser] = useState<{ clubName?: string } | null>(null);
@@ -25,214 +21,182 @@ export default function TransfersPage() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [transfers, setTransfers] = useState<{ outId: string; inId: string }[]>([]);
-  const [teamData, setTeamData] = useState<{ formation: string; captainId: string | null; viceCaptainId: string | null; players: UserPlayer[] } | null>(null);
+  const [teamData, setTeamData] = useState<{ formation: string; captainId: string | null; viceCaptainId: string | null } | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user));
-    fetch("/api/players").then((r) => r.json()).then((d) => setAllPlayers(d.players || []));
-    fetch("/api/team").then((r) => r.json()).then((d) => {
-      if (d.team) {
-        setTeamData(d.team);
-        setMyPlayers(d.team.players);
-      }
+    fetch("/api/auth/me").then(r => r.json()).then(d => setUser(d.user));
+    fetch("/api/players").then(r => r.json()).then(d => setAllPlayers(d.players || []));
+    fetch("/api/team").then(r => r.json()).then(d => {
+      if (d.team) { setTeamData(d.team); setMyPlayers(d.team.players); }
     });
   }, []);
 
-  const myPlayerIds = myPlayers.map((p) => p.player.id);
+  const myIds = myPlayers.map(p => p.player.id);
   const teamValue = myPlayers.reduce((s, p) => s + p.player.value, 0);
-
-  const filteredPlayers = allPlayers.filter((p) => {
-    if (myPlayerIds.includes(p.id)) return false;
+  const filteredIn = allPlayers.filter(p => {
+    if (myIds.includes(p.id)) return false;
     if (filterPos !== "ALL" && p.position !== filterPos) return false;
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
-  function selectOut(up: UserPlayer) {
-    setSelectedOut(up);
-    setFilterPos(up.player.position);
-    setSearch("");
-  }
+  function selectOut(up: UserPlayer) { setSelectedOut(up); setFilterPos(up.player.position); setSearch(""); setMsg(null); }
 
-  function selectIn(newPlayer: Player) {
+  function selectIn(np: Player) {
     if (!selectedOut) return;
-    const valueDiff = newPlayer.value - selectedOut.player.value;
-    if (teamValue + valueDiff > 100) {
-      setMsg({ type: "err", text: `Over budget by £${(teamValue + valueDiff - 100).toFixed(1)}m` }); return;
-    }
-    setTransfers((prev) => [...prev.filter((t) => t.outId !== selectedOut.player.id), { outId: selectedOut.player.id, inId: newPlayer.id }]);
-    setMyPlayers((prev) => prev.map((p) =>
-      p.player.id === selectedOut.player.id ? { ...p, player: newPlayer } : p
-    ));
+    const diff = np.value - selectedOut.player.value;
+    if (teamValue + diff > 100) { setMsg({ type: "err", text: `Over budget by £${(teamValue + diff - 100).toFixed(1)}m` }); return; }
+    setTransfers(prev => [...prev.filter(t => t.outId !== selectedOut.player.id), { outId: selectedOut.player.id, inId: np.id }]);
+    setMyPlayers(prev => prev.map(p => p.player.id === selectedOut.player.id ? { ...p, player: np } : p));
     setSelectedOut(null);
     setMsg(null);
   }
 
-  async function saveTransfers() {
+  async function save() {
     if (!teamData || transfers.length === 0) return;
     setSaving(true);
-    try {
-      const updatedPlayers = myPlayers.map((p) => ({
-        playerId: p.player.id, isSub: p.isSub, slot: p.slot,
-      }));
-      const res = await fetch("/api/team", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          formation: teamData.formation,
-          captainId: teamData.captainId,
-          viceCaptainId: teamData.viceCaptainId,
-          players: updatedPlayers,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMsg({ type: "ok", text: `${transfers.length} transfer(s) saved!` });
-        setTransfers([]);
-      } else setMsg({ type: "err", text: data.error });
-    } catch { setMsg({ type: "err", text: "Failed to save" }); }
+    const res = await fetch("/api/team", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ formation: teamData.formation, captainId: teamData.captainId, viceCaptainId: teamData.viceCaptainId, players: myPlayers.map(p => ({ playerId: p.player.id, isSub: p.isSub, slot: p.slot })) }),
+    });
+    const data = await res.json();
+    if (res.ok) { setMsg({ type: "ok", text: `${transfers.length} transfer${transfers.length !== 1 ? "s" : ""} saved.` }); setTransfers([]); }
+    else setMsg({ type: "err", text: data.error });
     setSaving(false);
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
+    <div style={{ background: "var(--bg)", minHeight: "100vh" }}>
       <NavBar clubName={user?.clubName} />
+      <div className="max-w-7xl mx-auto px-4" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", marginBottom: "2rem" }}>
           <div>
-            <h1 className="text-2xl font-black text-white flex items-center gap-2">
-              <ArrowLeftRight size={24} className="text-yellow-400" /> Transfers
-            </h1>
-            <p className="text-slate-400 mt-1">Budget: £{teamValue.toFixed(1)}m / £100m — {transfers.length} pending transfer{transfers.length !== 1 ? "s" : ""}</p>
+            <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "var(--text-3xl)", color: "var(--ink)", marginBottom: "0.3rem" }}>Transfers</h1>
+            <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)" }}>
+              Budget: <span style={{ color: "var(--ink)", fontWeight: 600 }}>£{teamValue.toFixed(1)}m / £100m</span>
+              {transfers.length > 0 && <span style={{ color: "var(--primary)", fontWeight: 600 }}> · {transfers.length} pending</span>}
+            </p>
           </div>
           {transfers.length > 0 && (
-            <button onClick={saveTransfers} disabled={saving} className="btn-gold px-6 py-2.5 text-sm flex items-center gap-2">
-              <CheckCircle size={14} /> {saving ? "Saving..." : `Save ${transfers.length} Transfer${transfers.length !== 1 ? "s" : ""}`}
+            <button onClick={save} disabled={saving} className="btn-primary">
+              {saving ? "Saving…" : `Save ${transfers.length} transfer${transfers.length !== 1 ? "s" : ""}`}
             </button>
           )}
         </div>
 
         {msg && (
-          <div className="mb-4 p-3 rounded-lg text-sm" style={{
-            background: msg.type === "ok" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-            border: `1px solid ${msg.type === "ok" ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
-            color: msg.type === "ok" ? "#86efac" : "#fca5a5",
-          }}>
+          <div style={{ padding: "0.75rem 1rem", marginBottom: "1.25rem", borderRadius: "var(--r-md)", fontSize: "var(--text-sm)", background: msg.type === "ok" ? "oklch(0.56 0.18 145 / 0.1)" : "oklch(0.58 0.20 25 / 0.1)", border: `1px solid ${msg.type === "ok" ? "oklch(0.56 0.18 145 / 0.3)" : "oklch(0.58 0.20 25 / 0.3)"}`, color: msg.type === "ok" ? "var(--accent)" : "var(--danger)" }}>
             {msg.text}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
           {/* My squad */}
           <div>
-            <h2 className="font-bold text-white mb-3">My Squad — click a player to transfer out</h2>
+            <h2 style={{ fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink)", marginBottom: "0.875rem" }}>My squad — select to transfer out</h2>
             {myPlayers.length === 0 ? (
-              <div className="card-glass p-8 text-center text-slate-400">
-                Build your team first before making transfers.
+              <div className="card" style={{ padding: "2rem", textAlign: "center" }}>
+                <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)" }}>Build your squad first.</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {["GK", "DEF", "MID", "FWD"].map((pos) => (
-                  <div key={pos}>
-                    <div className="text-xs font-bold tracking-widest text-slate-500 px-2 py-1">{pos}</div>
-                    {myPlayers.filter((p) => p.player.position === pos).map((up) => {
-                      const isSelectedOut = selectedOut?.player.id === up.player.id;
-                      const isTransferred = transfers.some((t) => t.inId === up.player.id);
-                      return (
-                        <button
-                          key={up.slot}
-                          onClick={() => selectOut(up)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl text-left mb-1 transition-all"
-                          style={{
-                            background: isSelectedOut ? "rgba(240,180,41,0.1)" : "rgba(255,255,255,0.03)",
-                            border: isSelectedOut ? "1px solid rgba(240,180,41,0.4)" : "1px solid rgba(255,255,255,0.06)",
-                          }}
-                        >
-                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#0d2a4a" }}>
-                            {up.player.sofifaId ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={`https://cdn.sofifa.net/players/${up.player.sofifaId}/25_120x120.png`} alt={up.player.name} width={40} height={40} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center font-bold" style={{ color: posColors[pos] }}>{up.player.name.charAt(0)}</div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-white flex items-center gap-2">
-                              {up.player.name}
-                              {up.isSub && <span className="text-xs px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">SUB</span>}
-                              {isTransferred && <span className="text-xs px-1.5 py-0.5 rounded bg-green-900/50 text-green-400">NEW</span>}
+              <div className="card" style={{ overflow: "hidden" }}>
+                {["GK", "DEF", "MID", "FWD"].map(pos => {
+                  const posPlayers = myPlayers.filter(p => p.player.position === pos);
+                  if (!posPlayers.length) return null;
+                  return (
+                    <div key={pos}>
+                      <div style={{ padding: "0.4rem 1rem", fontSize: "0.7rem", fontWeight: 700, color: "var(--ink-3)", background: "var(--surface-high)", borderBottom: "1px solid var(--border-subtle)", letterSpacing: "0.06em" }}>{pos}</div>
+                      {posPlayers.map(up => {
+                        const isOut = selectedOut?.player.id === up.player.id;
+                        const isNew = transfers.some(t => t.inId === up.player.id);
+                        return (
+                          <motion.button
+                            key={up.slot}
+                            onClick={() => selectOut(up)}
+                            whileHover={{ backgroundColor: "oklch(0.95 0 0 / 0.03)" }}
+                            style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", width: "100%", background: isOut ? "var(--primary-bg)" : "transparent", border: "none", cursor: "pointer", borderBottom: "1px solid var(--border-subtle)", borderLeft: `3px solid ${isOut ? "var(--primary)" : "transparent"}`, textAlign: "left", transition: "background var(--t-fast)" }}
+                          >
+                            <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", background: "var(--surface-high)", flexShrink: 0, position: "relative" }}>
+                              <img src={`/api/player-image/${up.player.id}`} alt={up.player.name} width={36} height={36} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
+                                onError={e => { const t = e.target as HTMLImageElement; t.style.display = "none"; const fb = t.nextElementSibling as HTMLElement | null; if (fb) fb.style.display = "flex"; }} />
+                              <div style={{ display: "none", position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12, color: posColors[pos], fontFamily: "var(--font-display)" }}>
+                                {up.player.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
+                              </div>
                             </div>
-                            <div className="text-xs text-slate-400">{getFlag(up.player.country)} {up.player.clubTeam} · {up.player.totalPoints} pts</div>
-                          </div>
-                          <div className="font-bold text-yellow-400">£{up.player.value}m</div>
-                          <ArrowLeftRight size={14} className="text-slate-500" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                <span style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{up.player.name}</span>
+                                {up.isSub && <span className="chip chip-muted">SUB</span>}
+                                {isNew && <span className="chip chip-green">NEW</span>}
+                              </div>
+                              <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-2)" }}>{getFlag(up.player.country)} {up.player.clubTeam}</div>
+                            </div>
+                            <div style={{ textAlign: "right", flexShrink: 0 }}>
+                              <div style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--primary)" }}>£{up.player.value}m</div>
+                              <ArrowRight size={12} style={{ color: "var(--ink-3)", marginTop: 2 }} />
+                            </div>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* Player search */}
           <div>
-            <h2 className="font-bold text-white mb-3">
-              {selectedOut ? `Select replacement for ${selectedOut.player.name}` : "Select a player from your squad first"}
+            <h2 style={{ fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink)", marginBottom: "0.875rem" }}>
+              {selectedOut ? `Replace ${selectedOut.player.name}` : "Select a player to transfer out first"}
             </h2>
 
-            <div className="flex gap-2 mb-3">
-              <div className="relative flex-1">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" placeholder="Search players..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ paddingLeft: 32, paddingTop: 8, paddingBottom: 8 }} disabled={!selectedOut} />
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.625rem" }}>
+              <div style={{ position: "relative", flex: 1 }}>
+                <Search size={13} style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: "var(--ink-3)", pointerEvents: "none" }} />
+                <input type="text" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} disabled={!selectedOut} style={{ paddingLeft: "2.25rem" }} />
               </div>
-              <select value={filterPos} onChange={(e) => setFilterPos(e.target.value)} style={{ padding: "8px 12px", width: "auto" }} disabled={!selectedOut}>
-                {["ALL", "GK", "DEF", "MID", "FWD"].map((p) => <option key={p}>{p}</option>)}
+              <select value={filterPos} onChange={e => setFilterPos(e.target.value)} disabled={!selectedOut} style={{ width: "auto" }}>
+                {["ALL", "GK", "DEF", "MID", "FWD"].map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
 
             {!selectedOut ? (
-              <div className="card-glass p-12 text-center text-slate-500">
-                Click a player on the left to select them for transfer
+              <div className="card" style={{ padding: "3rem", textAlign: "center" }}>
+                <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-3)" }}>Click a player on the left to select them for transfer.</p>
               </div>
             ) : (
-              <div className="space-y-1 overflow-y-auto" style={{ maxHeight: "60vh" }}>
-                {filteredPlayers.map((p) => {
-                  const valueDiff = p.value - selectedOut.player.value;
-                  const affordable = teamValue + valueDiff <= 100;
+              <div className="card" style={{ overflow: "hidden", maxHeight: "65vh", overflowY: "auto" }}>
+                {filteredIn.map(p => {
+                  const diff = p.value - selectedOut.player.value;
+                  const canAfford = teamValue + diff <= 100;
                   return (
-                    <button
+                    <motion.button
                       key={p.id}
-                      onClick={() => affordable && selectIn(p)}
-                      disabled={!affordable}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
-                      style={{
-                        background: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.06)",
-                        opacity: affordable ? 1 : 0.4,
-                        cursor: affordable ? "pointer" : "not-allowed",
-                      }}
+                      onClick={() => canAfford && selectIn(p)}
+                      disabled={!canAfford}
+                      whileHover={canAfford ? { backgroundColor: "oklch(0.95 0 0 / 0.03)" } : {}}
+                      style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", width: "100%", background: "transparent", border: "none", borderBottom: "1px solid var(--border-subtle)", cursor: canAfford ? "pointer" : "not-allowed", opacity: canAfford ? 1 : 0.35, textAlign: "left", transition: "background var(--t-fast)" }}
                     >
-                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#0d2a4a" }}>
-                        {p.sofifaId ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={`https://cdn.sofifa.net/players/${p.sofifaId}/25_120x120.png`} alt={p.name} width={40} height={40} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center font-bold" style={{ color: posColors[p.position] }}>{p.name.charAt(0)}</div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-white">{p.name}</div>
-                        <div className="text-xs text-slate-400">{getFlag(p.country)} {p.clubTeam} · {p.totalPoints} pts</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-yellow-400">£{p.value}m</div>
-                        <div className={`text-xs font-medium ${valueDiff > 0 ? "text-red-400" : valueDiff < 0 ? "text-green-400" : "text-slate-400"}`}>
-                          {valueDiff > 0 ? `+£${valueDiff.toFixed(1)}m` : valueDiff < 0 ? `-£${Math.abs(valueDiff).toFixed(1)}m` : "same"}
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", background: "var(--surface-high)", flexShrink: 0, position: "relative" }}>
+                        <img src={`/api/player-image/${p.id}`} alt={p.name} width={36} height={36} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
+                          onError={e => { const t = e.target as HTMLImageElement; t.style.display = "none"; const fb = t.nextElementSibling as HTMLElement | null; if (fb) fb.style.display = "flex"; }} />
+                        <div style={{ display: "none", position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12, color: posColors[p.position], fontFamily: "var(--font-display)" }}>
+                          {p.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
                         </div>
                       </div>
-                    </button>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                        <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-2)" }}>{getFlag(p.country)} {p.clubTeam}</div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--primary)" }}>£{p.value}m</div>
+                        <div style={{ fontSize: "0.7rem", fontWeight: 600, color: diff > 0 ? "var(--danger)" : diff < 0 ? "var(--accent)" : "var(--ink-3)" }}>
+                          {diff > 0 ? `+£${diff.toFixed(1)}m` : diff < 0 ? `−£${Math.abs(diff).toFixed(1)}m` : "same"}
+                        </div>
+                      </div>
+                    </motion.button>
                   );
                 })}
               </div>

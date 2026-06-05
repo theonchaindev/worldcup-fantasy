@@ -2,334 +2,242 @@
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Trophy, Star, Users, Zap, Shield, Globe, ChevronRight, Award } from "lucide-react";
-import { fadeUp, stagger } from "@/lib/motion";
+import { ChevronRight, Trophy } from "lucide-react";
 
-function Counter({ value, suffix = "" }: { value: string; suffix?: string }) {
+const scoring = [
+  ["Goal (FWD)", "+4"], ["Goal (MID)", "+5"], ["Goal (DEF/GK)", "+6"],
+  ["Assist", "+3"], ["Clean sheet (GK/DEF)", "+4"],
+  ["Penalty save", "+5"], ["Yellow card", "−1"], ["Red card", "−3"],
+  ["Playing 90 min", "+2"], ["Captain", "×2"],
+];
+
+function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
+  const inView = useInView(ref, { once: true, margin: "-60px" });
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 16 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="text-center"
+      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      className={className}
     >
-      <div className="text-3xl md:text-4xl font-black" style={{ color: "#f0b429" }}>{value}{suffix}</div>
+      {children}
     </motion.div>
   );
 }
 
-const features = [
-  { icon: <Star size={22} />, title: "Captain & Chips", desc: "Triple Captain, Bench Boost, Free Hit, Wildcard — strategic tools to maximise your points." },
-  { icon: <Users size={22} />, title: "Mini Leagues", desc: "Create private leagues with friends and compete on your own leaderboard." },
-  { icon: <Zap size={22} />, title: "Live Points", desc: "Real-time scoring as World Cup 2026 matches unfold across USA, Canada & Mexico." },
-  { icon: <Shield size={22} />, title: "Token Gated", desc: "Hold 500K WCF tokens to enter. Our community, our game." },
-  { icon: <Globe size={22} />, title: "48 Nations", desc: "400+ players from all World Cup 2026 qualified nations to choose from." },
-  { icon: <Award size={22} />, title: "Prize Pot", desc: "Prize pool funded by token rewards + entry fees. Winner takes the glory." },
-];
-
-const howItWorks = [
-  { step: "01", title: "Hold 500K WCF", desc: "You need 500,000 WCF tokens in your Solana wallet to qualify." },
-  { step: "02", title: "Pay Entry Fee", desc: "Send 0.2 SOL to our treasury wallet and paste your transaction ID." },
-  { step: "03", title: "Build Your Squad", desc: "Pick 15 players within a £100m budget. Choose formation and captain." },
-  { step: "04", title: "Earn Points", desc: "Earn points from real World Cup performances and top the leaderboard." },
-];
-
-const scoring = [
-  ["Playing (45+ min)", "+1"], ["Playing (90 min)", "+2"],
-  ["Goal (FWD)", "+4"], ["Goal (MID)", "+5"], ["Goal (DEF/GK)", "+6"],
-  ["Assist", "+3"], ["Clean sheet (GK/DEF)", "+4"], ["Clean sheet (MID)", "+1"],
-  ["Penalty save", "+5"], ["Yellow card", "-1"], ["Red card", "-3"],
-  ["Own goal", "-2"], ["Bonus (top performer)", "+1 to +3"], ["Captain", "×2 points"],
-];
-
 export default function LandingPage() {
-  const featRef = useRef(null);
-  const featInView = useInView(featRef, { once: true, margin: "-80px" });
-  const howRef = useRef(null);
-  const howInView = useInView(howRef, { once: true, margin: "-80px" });
-  const scoreRef = useRef(null);
-  const scoreInView = useInView(scoreRef, { once: true, margin: "-80px" });
-
   return (
-    <main className="min-h-screen overflow-hidden" style={{ background: "#050d1a" }}>
+    <main style={{ background: "var(--bg)", color: "var(--ink)", fontFamily: "var(--font-body)" }}>
+
+      {/* ── NAV ── */}
+      <nav style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <span className="display text-amber" style={{ fontSize: "var(--text-lg)", letterSpacing: "-0.01em" }}>
+            WC Fantasy
+          </span>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="btn-ghost" style={{ padding: "0.4rem 1rem", fontSize: "var(--text-sm)" }}>Sign in</Link>
+            <Link href="/register" className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "var(--text-sm)" }}>Enter now</Link>
+          </div>
+        </div>
+      </nav>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 pb-16">
-        {/* Radial glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.5 }}
-            className="absolute inset-0"
-            style={{ background: "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(240,180,41,0.18) 0%, transparent 70%)" }}
-          />
-          {/* Grid */}
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 80px, rgba(255,255,255,0.04) 80px, rgba(255,255,255,0.04) 81px), repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(255,255,255,0.04) 80px, rgba(255,255,255,0.04) 81px)" }} />
-        </div>
-
-        {/* Floating particles */}
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              width: Math.random() * 4 + 2,
-              height: Math.random() * 4 + 2,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              background: i % 3 === 0 ? "#f0b429" : i % 3 === 1 ? "#22c55e" : "#3b82f6",
-              opacity: 0.4,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.6, 0.2],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 3,
-              repeat: Infinity,
-              delay: Math.random() * 3,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-
-        <div className="relative z-10 max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-medium"
-            style={{ background: "rgba(240,180,41,0.1)", border: "1px solid rgba(240,180,41,0.3)", color: "#f0b429" }}
-          >
-            <Trophy size={13} />
-            World Cup 2026 — USA · Canada · Mexico
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
-            className="text-5xl sm:text-7xl md:text-8xl font-black mb-4 leading-none tracking-tight"
-          >
-            <span className="gold-shimmer">WORLD CUP</span>
-            <br />
-            <span className="text-white">FANTASY</span>{" "}
-            <span className="text-slate-500">2026</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.35 }}
-            className="text-lg md:text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed"
-          >
-            The ultimate on-chain fantasy football experience. Pick your squad from 400+ players, compete for the prize pot, and prove you know the beautiful game.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="flex flex-col sm:flex-row gap-3 justify-center mb-12"
-          >
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-              <Link href="/register" className="btn-gold px-8 py-4 text-base inline-flex items-center gap-2 rounded-xl">
-                Enter Now <ChevronRight size={18} />
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-              <Link href="/login" className="btn-outline px-8 py-4 text-base inline-flex items-center justify-center rounded-xl">
-                Sign In
-              </Link>
-            </motion.div>
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div
-            variants={stagger(0.1)}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-3 gap-6 max-w-xs mx-auto"
-          >
-            {[
-              { value: "400+", label: "Players" },
-              { value: "48", label: "Nations" },
-              { value: "£100m", label: "Budget" },
-            ].map((s, i) => (
-              <motion.div key={s.label} variants={fadeUp} className="text-center" custom={i}>
-                <div className="text-2xl md:text-3xl font-black" style={{ color: "#f0b429" }}>{s.value}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-
-        {/* Pitch preview */}
+      <section className="max-w-6xl mx-auto px-6" style={{ paddingTop: "6rem", paddingBottom: "6rem" }}>
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.7, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-2xl mx-auto mt-16 px-4"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ border: "1px solid rgba(240,180,41,0.18)", boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 40px rgba(240,180,41,0.06)" }}>
-            <div className="pitch-bg h-44 flex items-center justify-center relative">
-              <div className="absolute top-0 left-0 right-0 h-1/2 border-b border-white/15" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border border-white/15" />
-              <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                className="relative z-10 text-center"
-              >
-                <div className="text-5xl mb-1">⚽</div>
-                <div className="text-white font-black text-lg tracking-wide">BUILD YOUR SQUAD</div>
-                <div className="text-green-300/80 text-sm">£100m budget · 15 players</div>
-              </motion.div>
-            </div>
+          <div className="chip chip-amber mb-5" style={{ display: "inline-flex" }}>
+            <span className="live-dot" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+            World Cup 2026 — USA · Canada · Mexico
+          </div>
+
+          <h1 className="display" style={{ fontSize: "clamp(3.5rem, 10vw, 7.5rem)", color: "var(--ink)", marginBottom: "1.25rem", maxWidth: "14ch", textWrap: "balance" }}>
+            World Cup<br />
+            <span className="text-amber">Fantasy</span> 2026
+          </h1>
+
+          <p style={{ fontSize: "var(--text-md)", color: "var(--ink-2)", maxWidth: "52ch", lineHeight: 1.65, marginBottom: "2.5rem", textWrap: "pretty" }}>
+            Token-gated World Cup fantasy football. Hold 500K WCF, pay 0.2 SOL, pick your squad from 400+ players and compete for the prize pool.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <Link href="/register" className="btn-primary" style={{ fontSize: "var(--text-base)", padding: "0.75rem 2rem" }}>
+              Enter now <ChevronRight size={16} />
+            </Link>
+            <Link href="/login" className="btn-ghost" style={{ fontSize: "var(--text-base)", padding: "0.75rem 2rem" }}>
+              Sign in
+            </Link>
           </div>
         </motion.div>
 
-        {/* Scroll indicator */}
+        {/* Horizontal stats strip */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="flex flex-wrap gap-8 mt-14"
+          style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "2rem" }}
         >
-          <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-5 h-8 rounded-full border border-slate-600 flex items-start justify-center pt-1.5"
-          >
-            <div className="w-1 h-2 rounded-full bg-slate-400" />
-          </motion.div>
+          {[
+            { value: "400+", label: "Players" },
+            { value: "48", label: "Nations" },
+            { value: "£100m", label: "Budget" },
+            { value: "0.2 SOL", label: "Entry fee" },
+            { value: "500K WCF", label: "To qualify" },
+          ].map((s) => (
+            <div key={s.label}>
+              <div className="display text-amber" style={{ fontSize: "var(--text-2xl)" }}>{s.value}</div>
+              <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-2)", marginTop: "0.2rem", fontWeight: 500 }}>{s.label}</div>
+            </div>
+          ))}
         </motion.div>
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section ref={howRef} className="py-24 px-4" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        <div className="max-w-5xl mx-auto">
-          <motion.div variants={fadeUp} initial="hidden" animate={howInView ? "show" : "hidden"} className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-3">How It Works</h2>
-            <p className="text-slate-400">Get set up in 4 simple steps</p>
-          </motion.div>
-          <motion.div
-            variants={stagger(0.1)}
-            initial="hidden"
-            animate={howInView ? "show" : "hidden"}
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5"
-          >
-            {howItWorks.map((h) => (
-              <motion.div
-                key={h.step}
-                variants={fadeUp}
-                whileHover={{ y: -4, boxShadow: "0 16px 40px rgba(0,0,0,0.4)" }}
-                className="card-glass p-6 text-center transition-shadow"
-              >
-                <div className="text-5xl font-black mb-3" style={{ color: "rgba(240,180,41,0.2)", fontVariantNumeric: "tabular-nums" }}>{h.step}</div>
-                <h3 className="font-bold text-white mb-2">{h.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{h.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+      <section style={{ borderTop: "1px solid var(--border-subtle)", padding: "5rem 0" }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <FadeIn>
+            <h2 className="display" style={{ fontSize: "var(--text-3xl)", marginBottom: "3rem", color: "var(--ink)" }}>
+              Four steps to compete
+            </h2>
+          </FadeIn>
 
-      {/* ── FEATURES ── */}
-      <section ref={featRef} className="py-24 px-4">
-        <div className="max-w-5xl mx-auto">
-          <motion.div variants={fadeUp} initial="hidden" animate={featInView ? "show" : "hidden"} className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-3">Everything You Need</h2>
-            <p className="text-slate-400">Built for the serious fantasy manager</p>
-          </motion.div>
-          <motion.div
-            variants={stagger(0.08)}
-            initial="hidden"
-            animate={featInView ? "show" : "hidden"}
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
-          >
-            {features.map((f) => (
-              <motion.div
-                key={f.title}
-                variants={fadeUp}
-                whileHover={{ y: -4, borderColor: "rgba(240,180,41,0.3)" }}
-                className="card-glass p-6 transition-all"
-              >
-                <div className="text-yellow-400 mb-4 w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(240,180,41,0.1)" }}>
-                  {f.icon}
+          <div className="grid gap-px" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", background: "var(--border-subtle)" }}>
+            {[
+              { title: "Hold 500K WCF", body: "Verify your Solana wallet holds 500,000 WCF tokens. We check the balance — no connection required." },
+              { title: "Pay 0.2 SOL", body: "Send 0.2 SOL to our treasury wallet and paste the transaction signature. Funds the prize pool." },
+              { title: "Build your squad", body: "Pick 15 players within a £100m budget across any of 7 formations. Set your captain and vice-captain." },
+              { title: "Earn points", body: "Points from real World Cup matches. Lead the global leaderboard or win your mini league." },
+            ].map((step, i) => (
+              <FadeIn key={step.title} delay={i * 0.07} className="p-8" style={{ background: "var(--bg)" }}>
+                <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-3)", fontWeight: 600, marginBottom: "1rem", letterSpacing: "0.06em" }}>
+                  {String(i + 1).padStart(2, "0")}
                 </div>
-                <h3 className="font-bold text-white mb-2">{f.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
-              </motion.div>
+                <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 700, marginBottom: "0.65rem", color: "var(--ink)" }}>{step.title}</h3>
+                <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "36ch" }}>{step.body}</p>
+              </FadeIn>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── SCORING ── */}
-      <section ref={scoreRef} className="py-24 px-4" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        <div className="max-w-2xl mx-auto">
-          <motion.div variants={fadeUp} initial="hidden" animate={scoreInView ? "show" : "hidden"} className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-3">Scoring System</h2>
-            <p className="text-slate-400">Points awarded per match</p>
-          </motion.div>
-          <motion.div
-            variants={stagger(0.03)}
-            initial="hidden"
-            animate={scoreInView ? "show" : "hidden"}
-            className="card-glass overflow-hidden"
-          >
-            {scoring.map(([action, pts], i) => (
-              <motion.div
-                key={action}
-                variants={fadeUp}
-                className="flex justify-between items-center px-6 py-3"
-                style={{ borderBottom: i < scoring.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
-              >
-                <span className="text-slate-300 text-sm">{action}</span>
-                <span className="font-bold text-sm" style={{ color: pts.startsWith("+") || pts.includes("×") ? "#f0b429" : "#ef4444" }}>{pts}</span>
-              </motion.div>
+      <section style={{ borderTop: "1px solid var(--border-subtle)", padding: "5rem 0" }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid gap-16" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+            <FadeIn>
+              <h2 className="display" style={{ fontSize: "var(--text-3xl)", marginBottom: "1rem", color: "var(--ink)" }}>
+                Scoring system
+              </h2>
+              <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", lineHeight: 1.7, maxWidth: "42ch" }}>
+                Points are awarded per World Cup match based on official statistics. Captain earns double points. Vice-captain earns 1.5x.
+              </p>
+
+              <div className="flex flex-wrap gap-3 mt-6">
+                <div className="chip chip-amber">Wildcard</div>
+                <div className="chip chip-amber">Triple Captain</div>
+                <div className="chip chip-amber">Bench Boost</div>
+                <div className="chip chip-amber">Free Hit</div>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={0.1}>
+              <div className="card" style={{ overflow: "hidden" }}>
+                {scoring.map(([action, pts], i) => (
+                  <div
+                    key={action}
+                    className="flex items-center justify-between px-5 py-3"
+                    style={{
+                      borderBottom: i < scoring.length - 1 ? "1px solid var(--border-subtle)" : "none",
+                    }}
+                  >
+                    <span style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)" }}>{action}</span>
+                    <span
+                      style={{
+                        fontSize: "var(--text-sm)",
+                        fontWeight: 700,
+                        color: pts.startsWith("−") ? "var(--danger)" : "var(--primary)",
+                        fontFeatureSettings: '"tnum"',
+                      }}
+                    >
+                      {pts}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section style={{ borderTop: "1px solid var(--border-subtle)", padding: "5rem 0" }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <FadeIn className="mb-10">
+            <h2 className="display" style={{ fontSize: "var(--text-3xl)", color: "var(--ink)" }}>Built for serious play</h2>
+          </FadeIn>
+
+          <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+            {[
+              { title: "7 formations", body: "4-3-3, 4-4-2, 4-2-3-1, 3-5-2, 3-4-3, 5-3-2, 5-4-1. Change before each gameweek deadline." },
+              { title: "Mini leagues", body: "Create a private league with a 6-character code. Invite friends, track the standings, win bragging rights." },
+              { title: "On-chain entry", body: "Token balance checked on Solana mainnet. Entry fee verified by transaction signature. No wallet connection required." },
+              { title: "Prize pool", body: "50% to first place. Built from 0.2 SOL entry fees plus WCF token rewards distributed during the tournament." },
+              { title: "Live points", body: "Points update as World Cup matches finish across all 48 nations competing in USA, Canada, and Mexico." },
+              { title: "Transfer window", body: "Make squad changes before each gameweek deadline. Budget enforced — every swap counts." },
+            ].map((f, i) => (
+              <FadeIn key={f.title} delay={i * 0.06}>
+                <div className="card p-6 h-full">
+                  <h3 style={{ fontSize: "var(--text-md)", fontWeight: 700, marginBottom: "0.65rem", color: "var(--ink)" }}>{f.title}</h3>
+                  <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", lineHeight: 1.65 }}>{f.body}</p>
+                </div>
+              </FadeIn>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-24 px-4">
-        <div className="max-w-2xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="card-glass p-12 text-center relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg, rgba(240,180,41,0.08), rgba(13,31,60,0.95))", border: "1px solid rgba(240,180,41,0.25)" }}
-          >
-            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% -20%, rgba(240,180,41,0.12), transparent 70%)" }} />
-            <motion.div
-              animate={{ rotate: [0, 5, -5, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="relative text-5xl mb-5"
-            >
-              🏆
-            </motion.div>
-            <h2 className="text-3xl font-black text-white mb-3 relative">Ready to Compete?</h2>
-            <p className="text-slate-400 mb-8 relative">Join the World Cup Fantasy 2026 community. The prize pot is growing — don&apos;t miss out.</p>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-              <Link href="/register" className="btn-gold px-10 py-4 text-base inline-flex items-center gap-2 rounded-xl">
-                Enter Now <ChevronRight size={18} />
-              </Link>
-            </motion.div>
-          </motion.div>
+      <section style={{ borderTop: "1px solid var(--border-subtle)", padding: "6rem 0" }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <FadeIn>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+              <div>
+                <h2 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", color: "var(--ink)", marginBottom: "1rem", maxWidth: "16ch", textWrap: "balance" }}>
+                  The tournament starts <span className="text-amber">June 11.</span>
+                </h2>
+                <p style={{ fontSize: "var(--text-md)", color: "var(--ink-2)", maxWidth: "44ch" }}>
+                  Entries open now. Prize pool grows with every manager who joins.
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <Link href="/register" className="btn-primary" style={{ fontSize: "var(--text-base)", padding: "0.85rem 2.5rem" }}>
+                  Enter now <ChevronRight size={16} />
+                </Link>
+              </div>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
-      <footer className="text-center py-8 text-slate-600 text-sm" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        World Cup Fantasy 2026 · Powered by Solana · WCF Token
+      <footer style={{ borderTop: "1px solid var(--border-subtle)", padding: "2rem 0" }}>
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4">
+          <span className="display text-amber" style={{ fontSize: "var(--text-base)" }}>WC Fantasy 2026</span>
+          <span style={{ fontSize: "var(--text-xs)", color: "var(--ink-3)" }}>Powered by Solana · WCF Token</span>
+        </div>
       </footer>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
     </main>
   );
 }

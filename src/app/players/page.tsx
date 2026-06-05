@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import NavBar from "@/components/NavBar";
-import { Search, X, TrendingUp, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, X, ChevronUp, ChevronDown } from "lucide-react";
 import { getFlag } from "@/lib/flags";
 import { motion, AnimatePresence } from "framer-motion";
-import { fadeUp, stagger, modalOverlay, modalContent } from "@/lib/motion";
 
 interface Player {
   id: string; name: string; position: string; country: string; clubTeam: string;
@@ -12,8 +11,11 @@ interface Player {
   ownership: number; goals: number; assists: number; cleanSheets: number; minutesPlayed: number;
 }
 
-const posColors: Record<string, string> = { GK: "#f59e0b", DEF: "#22c55e", MID: "#3b82f6", FWD: "#ef4444" };
-const posOrder = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
+const posColors: Record<string, string> = {
+  GK:  "oklch(0.72 0.15 75)",  DEF: "oklch(0.62 0.17 145)",
+  MID: "oklch(0.60 0.17 230)", FWD: "oklch(0.60 0.21 25)",
+};
+const posClass: Record<string, string> = { GK: "pos-gk", DEF: "pos-def", MID: "pos-mid", FWD: "pos-fwd" };
 
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -27,27 +29,22 @@ export default function PlayersPage() {
   const [countries, setCountries] = useState<string[]>([]);
   const [user, setUser] = useState<{ clubName?: string } | null>(null);
 
-  useEffect(() => {
-    fetch("/api/auth/me").then((r) => r.json()).then((d) => setUser(d.user));
-  }, []);
+  useEffect(() => { fetch("/api/auth/me").then(r => r.json()).then(d => setUser(d.user)); }, []);
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (filterPos !== "ALL") params.set("position", filterPos);
-    if (filterCountry !== "ALL") params.set("country", filterCountry);
-    if (search) params.set("search", search);
-    params.set("sort", sortBy);
-    params.set("order", sortDir);
-    fetch(`/api/players?${params}`).then((r) => r.json()).then((d) => {
+    const p = new URLSearchParams();
+    if (filterPos !== "ALL") p.set("position", filterPos);
+    if (filterCountry !== "ALL") p.set("country", filterCountry);
+    if (search) p.set("search", search);
+    p.set("sort", sortBy); p.set("order", sortDir);
+    fetch(`/api/players?${p}`).then(r => r.json()).then(d => {
       const ps: Player[] = d.players || [];
       setPlayers(ps);
-      if (countries.length === 0) {
-        setCountries(["ALL", ...Array.from(new Set(ps.map((p) => p.country))).sort() as string[]]);
-      }
+      if (countries.length === 0) setCountries(["ALL", ...Array.from(new Set(ps.map(x => x.country))).sort() as string[]]);
       setLoading(false);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterPos, filterCountry, search, sortBy, sortDir]);
 
   function toggleSort(col: string) {
@@ -55,110 +52,85 @@ export default function PlayersPage() {
     else { setSortBy(col); setSortDir("desc"); }
   }
 
-  const SortIcon = ({ col }: { col: string }) => sortBy === col
-    ? (sortDir === "desc" ? <ChevronDown size={13} /> : <ChevronUp size={13} />)
-    : null;
+  const SortIcon = ({ col }: { col: string }) => sortBy !== col ? null :
+    sortDir === "desc" ? <ChevronDown size={12} /> : <ChevronUp size={12} />;
 
   return (
-    <div className="min-h-screen" style={{ background: "#050d1a" }}>
+    <div style={{ background: "var(--bg)", minHeight: "100vh" }}>
       <NavBar clubName={user?.clubName} />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <h1 className="text-2xl font-black text-white">All Players</h1>
-          <p className="text-slate-400 text-sm mt-0.5">{players.length} players available</p>
-        </motion.div>
+      <div className="max-w-7xl mx-auto px-4" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "var(--text-3xl)", color: "var(--ink)", marginBottom: "0.3rem" }}>Players</h1>
+          <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)" }}>{players.length} available across 48 nations</p>
+        </div>
 
         {/* Filters */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card-glass p-4 mb-5 flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-44">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input type="text" placeholder="Search players…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ paddingLeft: 32, paddingTop: 8, paddingBottom: 8 }} />
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.625rem", marginBottom: "1.25rem", alignItems: "center" }}>
+          <div style={{ position: "relative", flex: "1 1 200px", minWidth: 160 }}>
+            <Search size={14} style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: "var(--ink-3)", pointerEvents: "none" }} />
+            <input type="text" placeholder="Search players…" value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: "2.25rem" }} />
           </div>
-          {["ALL", "GK", "DEF", "MID", "FWD"].map((p) => (
-            <motion.button
-              key={p}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setFilterPos(p)}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-              style={{
-                background: filterPos === p ? (p === "ALL" ? "rgba(240,180,41,0.2)" : `${posColors[p] || "#f0b429"}20`) : "rgba(255,255,255,0.04)",
-                border: filterPos === p ? `1px solid ${posColors[p] || "#f0b429"}50` : "1px solid rgba(255,255,255,0.06)",
-                color: filterPos === p ? (posColors[p] || "#f0b429") : "#64748b",
-              }}
-            >
-              {p}
-            </motion.button>
-          ))}
-          <select value={filterCountry} onChange={(e) => setFilterCountry(e.target.value)} style={{ padding: "8px 12px", width: "auto" }}>
-            {countries.map((c) => <option key={c}>{c}</option>)}
+
+          <div style={{ display: "flex", gap: "0.3rem" }}>
+            {["ALL", "GK", "DEF", "MID", "FWD"].map(pos => (
+              <button key={pos} onClick={() => setFilterPos(pos)} style={{ padding: "0.45rem 0.75rem", fontSize: "var(--text-xs)", fontWeight: 700, border: `1px solid ${filterPos === pos ? (posColors[pos] || "var(--primary)") : "var(--border-subtle)"}`, borderRadius: "var(--r-md)", background: filterPos === pos ? (pos === "ALL" ? "var(--primary-bg)" : `${posColors[pos]}18`) : "var(--surface)", color: filterPos === pos ? (posColors[pos] || "var(--primary)") : "var(--ink-3)", cursor: "pointer", transition: "all var(--t-fast)" }}>
+                {pos}
+              </button>
+            ))}
+          </div>
+
+          <select value={filterCountry} onChange={e => setFilterCountry(e.target.value)} style={{ flex: "0 1 160px" }}>
+            {countries.map(c => <option key={c}>{c}</option>)}
           </select>
-        </motion.div>
+        </div>
 
         {/* Table */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="card-glass overflow-hidden">
-          <table className="w-full text-sm">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card" style={{ overflow: "hidden" }}>
+          <table className="data-table">
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium text-xs w-8">#</th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium text-xs">Player</th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium text-xs">Pos</th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium text-xs hidden md:table-cell">Nation</th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium text-xs hidden lg:table-cell">Club</th>
-                <th className="text-right px-4 py-3 text-slate-500 font-medium text-xs cursor-pointer hover:text-yellow-400" onClick={() => toggleSort("value")}>
-                  <span className="inline-flex items-center gap-1">Value <SortIcon col="value" /></span>
+              <tr>
+                <th style={{ width: 36 }}>#</th>
+                <th>Player</th>
+                <th>Pos</th>
+                <th className="hidden md:table-cell">Nation</th>
+                <th className="hidden lg:table-cell">Club</th>
+                <th style={{ textAlign: "right", cursor: "pointer" }} onClick={() => toggleSort("value")}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>Value <SortIcon col="value" /></span>
                 </th>
-                <th className="text-right px-4 py-3 text-slate-500 font-medium text-xs cursor-pointer hover:text-yellow-400" onClick={() => toggleSort("points")}>
-                  <span className="inline-flex items-center gap-1">Pts <SortIcon col="points" /></span>
+                <th style={{ textAlign: "right", cursor: "pointer" }} onClick={() => toggleSort("points")}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>Pts <SortIcon col="points" /></span>
                 </th>
-                <th className="text-right px-4 py-3 text-slate-500 font-medium text-xs hidden sm:table-cell">Goals</th>
-                <th className="text-right px-4 py-3 text-slate-500 font-medium text-xs hidden sm:table-cell">Assists</th>
+                <th className="hidden sm:table-cell" style={{ textAlign: "right" }}>Goals</th>
+                <th className="hidden sm:table-cell" style={{ textAlign: "right" }}>Ast</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9}>
-                  <div className="flex items-center justify-center py-16">
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full" />
-                  </div>
-                </td></tr>
+                <tr><td colSpan={9} style={{ textAlign: "center", padding: "3rem", color: "var(--ink-3)" }}>Loading…</td></tr>
               ) : players.map((p, i) => (
-                <motion.tr
-                  key={p.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: Math.min(i * 0.015, 0.4) }}
-                  onClick={() => setSelected(p)}
-                  whileHover={{ backgroundColor: "rgba(255,255,255,0.04)" }}
-                  className="cursor-pointer transition-colors"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}
-                >
-                  <td className="px-4 py-2.5 text-slate-600 text-xs">{i + 1}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#0a1e38", border: `1.5px solid ${posColors[p.position]}30` }}>
-                        {p.sofifaId ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={`/api/player-image/${p.id}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover object-top" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs font-black" style={{ color: posColors[p.position] }}>
-                            {p.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
-                          </div>
-                        )}
+                <motion.tr key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i * 0.01, 0.3) }}
+                  onClick={() => setSelected(p)} style={{ cursor: "pointer" }}>
+                  <td style={{ color: "var(--ink-3)", fontFeatureSettings: '"tnum"' }}>{i + 1}</td>
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+                      <div style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", background: "var(--surface-high)", flexShrink: 0, position: "relative" }}>
+                        <img src={`/api/player-image/${p.id}`} alt={p.name} width={34} height={34} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
+                          onError={e => { const t = e.target as HTMLImageElement; t.style.display = "none"; const fb = t.nextElementSibling as HTMLElement | null; if (fb) fb.style.display = "flex"; }} />
+                        <div style={{ display: "none", position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 11, color: posColors[p.position], fontFamily: "var(--font-display)" }}>
+                          {p.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
+                        </div>
                       </div>
-                      <span className="font-semibold text-white text-sm">{p.name}</span>
+                      <span style={{ fontWeight: 600, color: "var(--ink)" }}>{p.name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-2.5">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: `${posColors[p.position]}18`, color: posColors[p.position] }}>{p.position}</span>
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-400 text-sm hidden md:table-cell">{getFlag(p.country)}</td>
-                  <td className="px-4 py-2.5 text-slate-500 text-xs hidden lg:table-cell truncate max-w-28">{p.clubTeam}</td>
-                  <td className="px-4 py-2.5 text-right font-bold text-yellow-400 text-sm">£{p.value}m</td>
-                  <td className="px-4 py-2.5 text-right font-bold text-white text-sm">{p.totalPoints}</td>
-                  <td className="px-4 py-2.5 text-right text-slate-400 text-sm hidden sm:table-cell">{p.goals}</td>
-                  <td className="px-4 py-2.5 text-right text-slate-400 text-sm hidden sm:table-cell">{p.assists}</td>
+                  <td><span className={`pos-badge ${posClass[p.position]}`}>{p.position}</span></td>
+                  <td className="hidden md:table-cell" style={{ color: "var(--ink-2)" }}>{getFlag(p.country)}</td>
+                  <td className="hidden lg:table-cell" style={{ color: "var(--ink-3)", maxWidth: "10rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.clubTeam}</td>
+                  <td style={{ textAlign: "right", fontWeight: 700, color: "var(--primary)", fontFeatureSettings: '"tnum"' }}>£{p.value}m</td>
+                  <td style={{ textAlign: "right", fontFamily: "var(--font-display)", fontWeight: 800, color: "var(--ink)", fontFeatureSettings: '"tnum"' }}>{p.totalPoints}</td>
+                  <td className="hidden sm:table-cell" style={{ textAlign: "right", color: "var(--ink-2)" }}>{p.goals}</td>
+                  <td className="hidden sm:table-cell" style={{ textAlign: "right", color: "var(--ink-2)" }}>{p.assists}</td>
                 </motion.tr>
               ))}
             </tbody>
@@ -169,95 +141,53 @@ export default function PlayersPage() {
       {/* Player modal */}
       <AnimatePresence>
         {selected && (
-          <motion.div
-            variants={modalOverlay}
-            initial="hidden"
-            animate="show"
-            exit="exit"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
-            onClick={() => setSelected(null)}
-          >
-            <motion.div
-              variants={modalContent}
-              initial="hidden"
-              animate="show"
-              exit="exit"
-              className="card-glass p-6 max-w-sm w-full"
-              style={{ boxShadow: "0 30px 80px rgba(0,0,0,0.7)" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between mb-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0" style={{ background: "#0a1e38", border: `2px solid ${posColors[selected.position]}40` }}>
-                    {selected.sofifaId ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`/api/player-image/${selected.id}`} alt={selected.name} width={80} height={80} className="w-full h-full object-cover object-top" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl font-black" style={{ color: posColors[selected.position] }}>
-                        {selected.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-white leading-tight">{selected.name}</h3>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: `${posColors[selected.position]}20`, color: posColors[selected.position] }}>{selected.position}</span>
-                      <span className="text-sm">{getFlag(selected.country)}</span>
-                    </div>
-                    <div className="text-slate-400 text-xs mt-1">{selected.clubTeam}</div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: "fixed", inset: 0, background: "oklch(0 0 0 / 0.7)", backdropFilter: "blur(4px)", zIndex: "var(--z-modal-bg)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
+            onClick={() => setSelected(null)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="card" style={{ maxWidth: 380, width: "100%", zIndex: "var(--z-modal)", overflow: "hidden" }}
+              onClick={e => e.stopPropagation()}>
+
+              <div style={{ display: "flex", gap: "1rem", padding: "1.5rem", alignItems: "flex-start" }}>
+                <div style={{ width: 80, height: 80, borderRadius: "var(--r-lg)", overflow: "hidden", background: "var(--surface-high)", flexShrink: 0, position: "relative" }}>
+                  <img src={`/api/player-image/${selected.id}`} alt={selected.name} width={80} height={80} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
+                    onError={e => { const t = e.target as HTMLImageElement; t.style.display = "none"; const fb = t.nextElementSibling as HTMLElement | null; if (fb) fb.style.display = "flex"; }} />
+                  <div style={{ display: "none", position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 24, color: posColors[selected.position], fontFamily: "var(--font-display)" }}>
+                    {selected.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
                   </div>
                 </div>
-                <button onClick={() => setSelected(null)} className="text-slate-500 hover:text-white transition-colors p-1">
-                  <X size={18} />
-                </button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink)", marginBottom: "0.4rem", lineHeight: 1.2 }}>{selected.name}</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                    <span className={`pos-badge ${posClass[selected.position]}`}>{selected.position}</span>
+                    <span style={{ fontSize: "var(--text-xs)", color: "var(--ink-2)" }}>{getFlag(selected.country)} {selected.country}</span>
+                  </div>
+                  <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-3)" }}>{selected.clubTeam}</div>
+                </div>
+                <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", color: "var(--ink-3)", cursor: "pointer", padding: "0.25rem" }}><X size={18} /></button>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mb-5">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1px", background: "var(--border-subtle)", borderTop: "1px solid var(--border-subtle)", borderBottom: "1px solid var(--border-subtle)" }}>
                 {[
-                  { label: "Value", value: `£${selected.value}m`, color: "#f0b429" },
-                  { label: "Points", value: selected.totalPoints, color: "#22c55e" },
-                  { label: "Form", value: (selected.form || 0).toFixed(1), color: "#3b82f6" },
-                ].map((s) => (
-                  <motion.div
-                    key={s.label}
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className="text-center p-3 rounded-xl"
-                    style={{ background: `${s.color}10`, border: `1px solid ${s.color}20` }}
-                  >
-                    <div className="text-lg font-black" style={{ color: s.color }}>{s.value}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
-                  </motion.div>
+                  { label: "Value", value: `£${selected.value}m`, amber: true },
+                  { label: "Points", value: selected.totalPoints },
+                  { label: "Form", value: (selected.form || 0).toFixed(1) },
+                ].map(s => (
+                  <div key={s.label} style={{ background: "var(--surface)", padding: "0.875rem", textAlign: "center" }}>
+                    <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "var(--text-xl)", color: s.amber ? "var(--primary)" : "var(--ink)" }}>{s.value}</div>
+                    <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-3)", marginTop: "0.2rem" }}>{s.label}</div>
+                  </div>
                 ))}
               </div>
 
-              <div className="space-y-0">
-                {[
-                  ["Goals", selected.goals],
-                  ["Assists", selected.assists],
-                  ["Clean Sheets", selected.cleanSheets],
-                  ["Minutes Played", selected.minutesPlayed],
-                  ["Ownership", `${(selected.ownership || 0).toFixed(1)}%`],
-                ].map(([label, val], i) => (
-                  <motion.div
-                    key={label as string}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 + i * 0.04 }}
-                    className="flex justify-between items-center py-2.5"
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-                  >
-                    <span className="text-slate-400 text-sm">{label as string}</span>
-                    <span className="font-bold text-white text-sm">{val as string | number}</span>
-                  </motion.div>
+              <div style={{ padding: "0.5rem 0" }}>
+                {[["Goals", selected.goals], ["Assists", selected.assists], ["Clean sheets", selected.cleanSheets], ["Minutes played", selected.minutesPlayed], ["Ownership", `${(selected.ownership || 0).toFixed(1)}%`]].map(([label, val]) => (
+                  <div key={label as string} style={{ display: "flex", justifyContent: "space-between", padding: "0.6rem 1.5rem", borderBottom: "1px solid var(--border-subtle)" }}>
+                    <span style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)" }}>{label as string}</span>
+                    <span style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--ink)" }}>{val as string | number}</span>
+                  </div>
                 ))}
-              </div>
-
-              <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                <TrendingUp size={12} />
-                <span>Click a slot on your pitch to add this player</span>
               </div>
             </motion.div>
           </motion.div>

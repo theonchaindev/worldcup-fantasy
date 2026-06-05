@@ -1,21 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
   title: "World Cup Fantasy 2026",
-  description: "The ultimate World Cup Fantasy Football game — pick your squad, earn points, win prizes.",
+  description: "Token-gated World Cup fantasy football. Pick your squad, earn points, compete for the prize pot.",
   openGraph: {
     title: "World Cup Fantasy 2026",
-    description: "Pick your World Cup squad and compete for the prize pot.",
+    description: "Token-gated fantasy football — WCF holders only.",
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html lang="en" className="h-full" style={{ colorScheme: "dark" }}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
