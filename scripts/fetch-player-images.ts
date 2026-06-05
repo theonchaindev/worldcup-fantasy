@@ -1,26 +1,42 @@
 /**
- * Fetches TheSportsDB headshot URLs for all players and stores them in the DB.
- * Run with: npx tsx scripts/fetch-player-images.ts
+ * Pre-populates player image URLs in the DB.
+ * Strategy per player:
+ *  1. FutBin CDN (uses stored sofifaId numeric FIFA ID) — fast, no rate limit
+ *  2. TheSportsDB search with normalized name
+ *  3. TheSportsDB search with last name only
+ * Run: npx tsx scripts/fetch-player-images.ts
  */
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function fetchImageUrl(name: string): Promise<string | null> {
+function normalize(name: string) {
+  return name.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+function lastName(name: string) {
+  return normalize(name).split(" ").slice(-1)[0];
+}
+
+async function checkFutBin(fifaId: string): Promise<string | null> {
   try {
-    const res = await fetch(
-      `https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p=${encodeURIComponent(name)}`,
-      { headers: { "User-Agent": "Mozilla/5.0" } }
+    const url = `https://cdn.futbin.com/content/fifa25/img/players/${fifaId}.png`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(2000) });
+    return r.ok ? url : null;
+  } catch { return null; }
+}
+
+async function searchSportsDb(term: string): Promise<string | null> {
+  try {
+    const r = await fetch(
+      `https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p=${encodeURIComponent(term)}`,
+      { signal: AbortSignal.timeout(3000) }
     );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const player = data?.player?.[0];
-    // Prefer cutout (transparent bg headshot), fall back to thumb
-    return player?.strCutout || player?.strThumb || null;
-  } catch {
-    return null;
-  }
+    if (!r.ok) return null;
+    const d = await r.json();
+    const p = d?.player?.[0];
+    return p?.strCutout || p?.strThumb || null;
+  } catch { return null; }
 }
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
@@ -31,29 +47,51 @@ async function main() {
     orderBy: { name: "asc" },
   });
 
-  console.log(`Fetching images for ${players.length} players…`);
-  let updated = 0, skipped = 0;
+  console.log(`Processing ${players.length} players…\n`);
+  let futbin = 0, sportsdb = 0, failed = 0;
 
   for (let i = 0; i < players.length; i++) {
     const p = players[i];
+    const prefix = `[${String(i + 1).padStart(3, " ")}/${players.length}]`;
 
-    // Skip if already has a URL stored
-    if (p.sofifaId?.startsWith("http")) { skipped++; continue; }
-
-    const url = await fetchImageUrl(p.name);
-    if (url) {
-      await prisma.player.update({ where: { id: p.id }, data: { sofifaId: url } });
-      updated++;
-      process.stdout.write(`[${i + 1}/${players.length}] ✓ ${p.name}\n`);
-    } else {
-      process.stdout.write(`[${i + 1}/${players.length}] - ${p.name} (not found)\n`);
+    // Skip already stored URLs
+    if (p.sofifaId?.startsWith("http")) {
+      process.stdout.write(`${prefix} ↩ ${p.name} (cached)\n`);
+      continue;
     }
 
-    // 350ms between requests to stay under TheSportsDB rate limit (3 req/s)
-    await sleep(350);
+    let url: string | null = null;
+
+    // 1. FutBin via numeric ID
+    if (p.sofifaId && /^\d+$/.test(p.sofifaId)) {
+      url = await checkFutBin(p.sofifaId);
+      if (url) { futbin++; process.stdout.write(`${prefix} ✓ ${p.name} [futbin]\n`); }
+    }
+
+    // 2. TheSportsDB — normalized full name
+    if (!url) {
+      url = await searchSportsDb(normalize(p.name));
+      if (url) { sportsdb++; process.stdout.write(`${prefix} ✓ ${p.name} [sportsdb]\n`); }
+      await sleep(340); // stay under 3 req/s
+    }
+
+    // 3. TheSportsDB — last name only
+    if (!url) {
+      url = await searchSportsDb(lastName(p.name));
+      if (url) { sportsdb++; process.stdout.write(`${prefix} ✓ ${p.name} [sportsdb-lastname]\n`); }
+      await sleep(340);
+    }
+
+    if (!url) { failed++; process.stdout.write(`${prefix} ✗ ${p.name}\n`); continue; }
+
+    await prisma.player.update({ where: { id: p.id }, data: { sofifaId: url } });
   }
 
-  console.log(`\nDone. Updated: ${updated}, Skipped (already had URL): ${skipped}, No result: ${players.length - updated - skipped}`);
+  console.log(`\n──────────────────────────────`);
+  console.log(`FutBin:      ${futbin}`);
+  console.log(`TheSportsDB: ${sportsdb}`);
+  console.log(`Not found:   ${failed}`);
+  console.log(`Total:       ${players.length}`);
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());
