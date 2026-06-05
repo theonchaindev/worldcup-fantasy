@@ -135,7 +135,7 @@ export default function DashboardClient({
                       <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#0a1e38" }}>
                         {p.player.sofifaId ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={`/api/player-image/${p.player.sofifaId}`} alt={p.player.name} width={36} height={36} className="w-full h-full object-cover object-top" />
+                          <img src={`/api/player-image/${p.player.id}`} alt={p.player.name} width={36} height={36} className="w-full h-full object-cover object-top" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xs font-black" style={{ color: posColors[p.player.position] }}>
                             {p.player.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
@@ -246,7 +246,7 @@ export default function DashboardClient({
                   <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#0a1e38" }}>
                     {p.sofifaId ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`/api/player-image/${p.sofifaId}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover object-top" />
+                      <img src={`/api/player-image/${p.id}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover object-top" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs font-black" style={{ color: posColors[p.position] }}>
                         {p.name.split(" ").map(w => w[0]).join("").slice(0, 2)}

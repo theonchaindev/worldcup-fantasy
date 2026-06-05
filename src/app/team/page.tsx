@@ -420,7 +420,7 @@ export default function TeamPage() {
                       <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#0a1e38" }}>
                         {p.sofifaId ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={`/api/player-image/${p.sofifaId}`} alt={p.name} width={32} height={32} className="w-full h-full object-cover object-top" />
+                          <img src={`/api/player-image/${p.id}`} alt={p.name} width={32} height={32} className="w-full h-full object-cover object-top" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xs font-black" style={{ color: posColors[p.position] }}>
                             {p.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
@@ -493,7 +493,7 @@ export default function TeamPage() {
                         <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#0a1e38" }}>
                           {p.sofifaId ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={`/api/player-image/${p.sofifaId}`} alt={p.name} width={44} height={44} className="w-full h-full object-cover object-top" />
+                            <img src={`/api/player-image/${p.id}`} alt={p.name} width={44} height={44} className="w-full h-full object-cover object-top" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center font-black" style={{ color: posColors[p.position] }}>
                               {p.name.split(" ").map(w => w[0]).join("").slice(0, 2)}

@@ -43,7 +43,7 @@ export function PlayerAvatar({
 }) {
   const posColor = positionColors[player.position] || "#f0b429";
   const proxyUrl = player.sofifaId
-    ? `/api/player-image/${player.sofifaId}`
+    ? `/api/player-image/${player.id}`
     : null;
 
   return (
@@ -144,7 +144,7 @@ export default function PlayerCard({
 }: Props) {
   const posColor = positionColors[player.position] || "#f0b429";
   const proxyUrl = player.sofifaId
-    ? `/api/player-image/${player.sofifaId}`
+    ? `/api/player-image/${player.id}`
     : null;
 
   return (

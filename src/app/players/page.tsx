@@ -140,7 +140,7 @@ export default function PlayersPage() {
                       <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0" style={{ background: "#0a1e38", border: `1.5px solid ${posColors[p.position]}30` }}>
                         {p.sofifaId ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={`/api/player-image/${p.sofifaId}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover object-top" />
+                          <img src={`/api/player-image/${p.id}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover object-top" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xs font-black" style={{ color: posColors[p.position] }}>
                             {p.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
@@ -192,7 +192,7 @@ export default function PlayersPage() {
                   <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0" style={{ background: "#0a1e38", border: `2px solid ${posColors[selected.position]}40` }}>
                     {selected.sofifaId ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`/api/player-image/${selected.sofifaId}`} alt={selected.name} width={80} height={80} className="w-full h-full object-cover object-top" />
+                      <img src={`/api/player-image/${selected.id}`} alt={selected.name} width={80} height={80} className="w-full h-full object-cover object-top" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-2xl font-black" style={{ color: posColors[selected.position] }}>
                         {selected.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
