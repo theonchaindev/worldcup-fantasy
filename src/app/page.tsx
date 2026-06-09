@@ -1,242 +1,173 @@
-"use client";
 import Link from "next/link";
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
-import { ChevronRight, Trophy } from "lucide-react";
 
 const scoring = [
-  ["Goal (FWD)", "+4"], ["Goal (MID)", "+5"], ["Goal (DEF/GK)", "+6"],
-  ["Assist", "+3"], ["Clean sheet (GK/DEF)", "+4"],
-  ["Penalty save", "+5"], ["Yellow card", "−1"], ["Red card", "−3"],
-  ["Playing 90 min", "+2"], ["Captain", "×2"],
+  ["Goal — forward", "+4"], ["Goal — midfielder", "+5"], ["Goal — defender / GK", "+6"],
+  ["Assist", "+3"], ["Clean sheet (GK / DEF)", "+4"], ["Penalty save", "+5"],
+  ["Playing 90 minutes", "+2"], ["Yellow card", "−1"], ["Red card", "−3"],
+  ["Own goal", "−2"], ["Captain", "×2 pts"],
 ];
 
-function FadeIn({ children, delay = 0, className = "", style }: { children: React.ReactNode; delay?: number; className?: string; style?: React.CSSProperties }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 16 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.4, delay }}
-      className={className}
-      style={style}
-    >
-      {children}
-    </motion.div>
-  );
-}
+const features = [
+  { heading: "7 formations", body: "4‑3‑3, 4‑4‑2, 4‑2‑3‑1, 3‑5‑2, 3‑4‑3, 5‑3‑2, 5‑4‑1. Change before every gameweek deadline." },
+  { heading: "Captain & chips", body: "Set a captain for ×2 points. Four chips per tournament: Wildcard, Triple Captain, Bench Boost, Free Hit." },
+  { heading: "Mini leagues", body: "Create a private league with a six-character code. Compete with friends on a dedicated leaderboard." },
+  { heading: "On-chain entry", body: "Token balance checked on Solana mainnet. Entry fee verified by transaction signature. No wallet connection required." },
+  { heading: "706 players", body: "Full squads from all 48 qualified nations. Updated pricing before the tournament opens." },
+  { heading: "Live prize pool", body: "50% of the pot to the winner. Funded by entry fees plus WCF token rewards distributed during the tournament." },
+];
 
 export default function LandingPage() {
   return (
-    <main style={{ background: "var(--bg)", color: "var(--ink)", fontFamily: "var(--font-body)" }}>
+    <main style={{ background: "var(--ground)", minHeight: "100vh" }}>
 
-      {/* ── NAV ── */}
-      <nav style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span className="display text-amber" style={{ fontSize: "var(--text-lg)", letterSpacing: "-0.01em" }}>
-            WC Fantasy
+      {/* ── Nav ── */}
+      <header style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)", position: "sticky", top: 0, zIndex: "var(--z-nav)" }}>
+        <div className="wrap" style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span className="display-italic" style={{ fontSize: "var(--t-lg)", color: "var(--maroon)" }}>
+            World Cup Fantasy
           </span>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="btn-ghost" style={{ padding: "0.4rem 1rem", fontSize: "var(--text-sm)" }}>Sign in</Link>
-            <Link href="/register" className="btn-primary" style={{ padding: "0.4rem 1rem", fontSize: "var(--text-sm)" }}>Enter now</Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <Link href="/login" style={{ fontSize: "var(--t-sm)", fontWeight: 500, color: "var(--muted)", textDecoration: "none" }}>Sign in</Link>
+            <Link href="/register" className="btn btn-primary">Enter now</Link>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* ── HERO ── */}
-      <section className="max-w-6xl mx-auto px-6" style={{ paddingTop: "6rem", paddingBottom: "6rem" }}>
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          <div className="chip chip-amber mb-5" style={{ display: "inline-flex" }}>
-            <span className="live-dot" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-            World Cup 2026 — USA · Canada · Mexico
-          </div>
+      {/* ── Hero ── */}
+      <section className="wrap" style={{ paddingTop: "6rem", paddingBottom: "6rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "end" }}>
 
-          <h1 className="display" style={{ fontSize: "clamp(3.5rem, 10vw, 7.5rem)", color: "var(--ink)", marginBottom: "1.25rem", maxWidth: "14ch", textWrap: "balance" }}>
-            World Cup<br />
-            <span className="text-amber">Fantasy</span> 2026
-          </h1>
-
-          <p style={{ fontSize: "var(--text-md)", color: "var(--ink-2)", maxWidth: "52ch", lineHeight: 1.65, marginBottom: "2.5rem", textWrap: "pretty" }}>
-            Token-gated World Cup fantasy football. Hold 500K WCF, pay 0.2 SOL, pick your squad from 400+ players and compete for the prize pool.
-          </p>
-
-          <div className="flex flex-wrap gap-3">
-            <Link href="/register" className="btn-primary" style={{ fontSize: "var(--text-base)", padding: "0.75rem 2rem" }}>
-              Enter now <ChevronRight size={16} />
-            </Link>
-            <Link href="/login" className="btn-ghost" style={{ fontSize: "var(--text-base)", padding: "0.75rem 2rem" }}>
-              Sign in
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Horizontal stats strip */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-wrap gap-8 mt-14"
-          style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "2rem" }}
-        >
-          {[
-            { value: "400+", label: "Players" },
-            { value: "48", label: "Nations" },
-            { value: "£100m", label: "Budget" },
-            { value: "0.2 SOL", label: "Entry fee" },
-            { value: "500K WCF", label: "To qualify" },
-          ].map((s) => (
-            <div key={s.label}>
-              <div className="display text-amber" style={{ fontSize: "var(--text-2xl)" }}>{s.value}</div>
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-2)", marginTop: "0.2rem", fontWeight: 500 }}>{s.label}</div>
+          {/* Left: display headline */}
+          <div>
+            <p className="chip chip-maroon fade-up" style={{ marginBottom: "1.5rem", display: "inline-flex" }}>
+              <span className="live-dot" />
+              USA · Canada · Mexico — June 2026
+            </p>
+            <h1 className="display fade-up" style={{ fontSize: "clamp(3rem, 7vw, 5.5rem)", color: "var(--navy)", lineHeight: 0.92, marginBottom: "1.5rem" }} data-delay="1">
+              World Cup<br />
+              <em style={{ fontStyle: "italic", color: "var(--maroon)" }}>Fantasy</em><br />
+              2026
+            </h1>
+            <p className="fade-up" style={{ fontSize: "var(--t-md)", color: "var(--muted)", maxWidth: "38ch", lineHeight: 1.65, marginBottom: "2.5rem" }} data-delay="2">
+              Token-gated. On-chain entry. 48 nations, 706 players, one prize pool.
+            </p>
+            <div className="fade-up" style={{ display: "flex", gap: "0.75rem", alignItems: "center" }} data-delay="3">
+              <Link href="/register" className="btn btn-primary" style={{ padding: "0.75rem 2rem", fontSize: "var(--t-base)" }}>Enter now</Link>
+              <Link href="/login" className="btn btn-ghost" style={{ padding: "0.75rem 2rem", fontSize: "var(--t-base)" }}>Sign in</Link>
             </div>
-          ))}
-        </motion.div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section style={{ borderTop: "1px solid var(--border-subtle)", padding: "5rem 0" }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <FadeIn>
-            <h2 className="display" style={{ fontSize: "var(--text-3xl)", marginBottom: "3rem", color: "var(--ink)" }}>
-              Four steps to compete
-            </h2>
-          </FadeIn>
-
-          <div className="grid gap-px" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", background: "var(--border-subtle)" }}>
-            {[
-              { title: "Hold 500K WCF", body: "Verify your Solana wallet holds 500,000 WCF tokens. We check the balance — no connection required." },
-              { title: "Pay 0.2 SOL", body: "Send 0.2 SOL to our treasury wallet and paste the transaction signature. Funds the prize pool." },
-              { title: "Build your squad", body: "Pick 15 players within a £100m budget across any of 7 formations. Set your captain and vice-captain." },
-              { title: "Earn points", body: "Points from real World Cup matches. Lead the global leaderboard or win your mini league." },
-            ].map((step, i) => (
-              <FadeIn key={step.title} delay={i * 0.07} className="p-8" style={{ background: "var(--bg)" }}>
-                <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-3)", fontWeight: 600, marginBottom: "1rem", letterSpacing: "0.06em" }}>
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 700, marginBottom: "0.65rem", color: "var(--ink)" }}>{step.title}</h3>
-                <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", lineHeight: 1.6, maxWidth: "36ch" }}>{step.body}</p>
-              </FadeIn>
-            ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── SCORING ── */}
-      <section style={{ borderTop: "1px solid var(--border-subtle)", padding: "5rem 0" }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid gap-16" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
-            <FadeIn>
-              <h2 className="display" style={{ fontSize: "var(--text-3xl)", marginBottom: "1rem", color: "var(--ink)" }}>
-                Scoring system
-              </h2>
-              <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", lineHeight: 1.7, maxWidth: "42ch" }}>
-                Points are awarded per World Cup match based on official statistics. Captain earns double points. Vice-captain earns 1.5x.
+          {/* Right: requirements metadata */}
+          <div className="fade-up" style={{ borderLeft: "1px solid var(--border)", paddingLeft: "3rem" }} data-delay="2">
+            <p style={{ fontSize: "var(--t-xs)", fontWeight: 600, color: "var(--subtle)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "1.5rem" }}>Entry requirements</p>
+            {[
+              ["Token balance", "500,000 WCF"],
+              ["Entry fee", "0.2 SOL"],
+              ["Squad budget", "£100 million"],
+              ["Squad size", "15 players (11 + 4 subs)"],
+              ["Nations", "All 48 World Cup qualifiers"],
+            ].map(([label, value]) => (
+              <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.75rem 0", borderBottom: "1px solid var(--border)" }}>
+                <span style={{ fontSize: "var(--t-sm)", color: "var(--muted)" }}>{label}</span>
+                <span style={{ fontSize: "var(--t-sm)", fontWeight: 600, color: "var(--navy)" }}>{value}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: "1.5rem" }}>
+              <div className="rule-maroon" />
+              <p style={{ marginTop: "1rem", fontSize: "var(--t-xs)", color: "var(--subtle)", lineHeight: 1.6 }}>
+                No wallet connection required. We verify your token balance and entry payment by reading the Solana blockchain directly.
               </p>
-
-              <div className="flex flex-wrap gap-3 mt-6">
-                <div className="chip chip-amber">Wildcard</div>
-                <div className="chip chip-amber">Triple Captain</div>
-                <div className="chip chip-amber">Bench Boost</div>
-                <div className="chip chip-amber">Free Hit</div>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={0.1}>
-              <div className="card" style={{ overflow: "hidden" }}>
-                {scoring.map(([action, pts], i) => (
-                  <div
-                    key={action}
-                    className="flex items-center justify-between px-5 py-3"
-                    style={{
-                      borderBottom: i < scoring.length - 1 ? "1px solid var(--border-subtle)" : "none",
-                    }}
-                  >
-                    <span style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)" }}>{action}</span>
-                    <span
-                      style={{
-                        fontSize: "var(--text-sm)",
-                        fontWeight: 700,
-                        color: pts.startsWith("−") ? "var(--danger)" : "var(--primary)",
-                        fontFeatureSettings: '"tnum"',
-                      }}
-                    >
-                      {pts}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </FadeIn>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
-      <section style={{ borderTop: "1px solid var(--border-subtle)", padding: "5rem 0" }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <FadeIn className="mb-10">
-            <h2 className="display" style={{ fontSize: "var(--text-3xl)", color: "var(--ink)" }}>Built for serious play</h2>
-          </FadeIn>
-
-          <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+      {/* ── How it works ── */}
+      <section style={{ borderTop: "1px solid var(--border)", padding: "5rem 0", background: "var(--surface)" }}>
+        <div className="wrap">
+          <h2 className="display" style={{ fontSize: "var(--t-2xl)", color: "var(--navy)", marginBottom: "0.5rem" }}>How it works</h2>
+          <p style={{ color: "var(--muted)", marginBottom: "3rem", fontSize: "var(--t-md)" }}>Four steps from wallet to squad.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0", borderTop: "1px solid var(--border)", borderLeft: "1px solid var(--border)" }}>
             {[
-              { title: "7 formations", body: "4-3-3, 4-4-2, 4-2-3-1, 3-5-2, 3-4-3, 5-3-2, 5-4-1. Change before each gameweek deadline." },
-              { title: "Mini leagues", body: "Create a private league with a 6-character code. Invite friends, track the standings, win bragging rights." },
-              { title: "On-chain entry", body: "Token balance checked on Solana mainnet. Entry fee verified by transaction signature. No wallet connection required." },
-              { title: "Prize pool", body: "50% to first place. Built from 0.2 SOL entry fees plus WCF token rewards distributed during the tournament." },
-              { title: "Live points", body: "Points update as World Cup matches finish across all 48 nations competing in USA, Canada, and Mexico." },
-              { title: "Transfer window", body: "Make squad changes before each gameweek deadline. Budget enforced — every swap counts." },
-            ].map((f, i) => (
-              <FadeIn key={f.title} delay={i * 0.06}>
-                <div className="card p-6 h-full">
-                  <h3 style={{ fontSize: "var(--text-md)", fontWeight: 700, marginBottom: "0.65rem", color: "var(--ink)" }}>{f.title}</h3>
-                  <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", lineHeight: 1.65 }}>{f.body}</p>
-                </div>
-              </FadeIn>
+              { n: "01", heading: "Hold tokens", body: "Your Solana wallet must hold 500,000 WCF tokens. We check the balance — read-only, no signature." },
+              { n: "02", heading: "Pay entry", body: "Send 0.2 SOL to our treasury wallet. Paste your transaction signature. We verify it on-chain." },
+              { n: "03", heading: "Pick your squad", body: "Select 15 players from 706 across 48 nations within a £100m budget. Set captain and formation." },
+              { n: "04", heading: "Earn points", body: "Points awarded per World Cup match. Top the global leaderboard or win your mini league." },
+            ].map((step) => (
+              <div key={step.n} style={{ padding: "2rem", borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+                <p className="display" style={{ fontSize: "3rem", color: "var(--border-mid)", marginBottom: "1rem" }}>{step.n}</p>
+                <h3 style={{ fontSize: "var(--t-md)", fontWeight: 700, color: "var(--navy)", marginBottom: "0.5rem" }}>{step.heading}</h3>
+                <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)", lineHeight: 1.65 }}>{step.body}</p>
+              </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features + Scoring ── */}
+      <section style={{ padding: "5rem 0" }}>
+        <div className="wrap" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5rem", alignItems: "start" }}>
+          {/* Features */}
+          <div>
+            <h2 className="display" style={{ fontSize: "var(--t-2xl)", color: "var(--navy)", marginBottom: "0.5rem" }}>What you get</h2>
+            <p style={{ color: "var(--muted)", marginBottom: "2.5rem" }}>Everything built for serious play.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+              {features.map((f) => (
+                <div key={f.heading} style={{ padding: "1.25rem 0", borderBottom: "1px solid var(--border)" }}>
+                  <p style={{ fontWeight: 700, color: "var(--navy)", marginBottom: "0.25rem", fontSize: "var(--t-base)" }}>{f.heading}</p>
+                  <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)", lineHeight: 1.6 }}>{f.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Scoring */}
+          <div>
+            <h2 className="display" style={{ fontSize: "var(--t-2xl)", color: "var(--navy)", marginBottom: "0.5rem" }}>Points system</h2>
+            <p style={{ color: "var(--muted)", marginBottom: "2.5rem" }}>Awarded per World Cup match.</p>
+            <div className="card">
+              {scoring.map(([action, pts], i) => (
+                <div key={action} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.8rem 1.25rem", borderBottom: i < scoring.length - 1 ? "1px solid var(--border)" : "none" }}>
+                  <span style={{ fontSize: "var(--t-sm)", color: "var(--muted)" }}>{action}</span>
+                  <span style={{ fontSize: "var(--t-sm)", fontWeight: 700, fontFamily: "var(--font-body)", fontVariantNumeric: "tabular-nums", color: pts.startsWith("−") ? "#A01A1A" : "var(--gold)" }}>{pts}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── CTA ── */}
-      <section style={{ borderTop: "1px solid var(--border-subtle)", padding: "6rem 0" }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <FadeIn>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-              <div>
-                <h2 className="display" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", color: "var(--ink)", marginBottom: "1rem", maxWidth: "16ch", textWrap: "balance" }}>
-                  The tournament starts <span className="text-amber">June 11.</span>
-                </h2>
-                <p style={{ fontSize: "var(--text-md)", color: "var(--ink-2)", maxWidth: "44ch" }}>
-                  Entries open now. Prize pool grows with every manager who joins.
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <Link href="/register" className="btn-primary" style={{ fontSize: "var(--text-base)", padding: "0.85rem 2.5rem" }}>
-                  Enter now <ChevronRight size={16} />
-                </Link>
-              </div>
-            </div>
-          </FadeIn>
+      <section style={{ borderTop: "1px solid var(--border)", padding: "6rem 0", background: "var(--surface)" }}>
+        <div className="wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "2rem" }}>
+          <div>
+            <h2 className="display" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--navy)", marginBottom: "1rem", maxWidth: "18ch" }}>
+              The tournament opens{" "}
+              <em style={{ color: "var(--maroon)", fontStyle: "italic" }}>June 11.</em>
+            </h2>
+            <p style={{ fontSize: "var(--t-md)", color: "var(--muted)", maxWidth: "40ch" }}>Prize pool grows with every manager who enters. Build your squad before the deadline.</p>
+          </div>
+          <Link href="/register" className="btn btn-primary" style={{ fontSize: "var(--t-md)", padding: "0.875rem 2.5rem", flexShrink: 0 }}>Enter now</Link>
         </div>
       </section>
 
-      <footer style={{ borderTop: "1px solid var(--border-subtle)", padding: "2rem 0" }}>
-        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4">
-          <span className="display text-amber" style={{ fontSize: "var(--text-base)" }}>WC Fantasy 2026</span>
-          <span style={{ fontSize: "var(--text-xs)", color: "var(--ink-3)" }}>Powered by Solana · WCF Token</span>
+      <footer style={{ borderTop: "1px solid var(--border)", padding: "1.75rem 0" }}>
+        <div className="wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <span className="display-italic" style={{ fontSize: "var(--t-base)", color: "var(--maroon)" }}>World Cup Fantasy 2026</span>
+          <span style={{ fontSize: "var(--t-xs)", color: "var(--subtle)" }}>Powered by Solana · WCF Token</span>
         </div>
       </footer>
 
+      {/* Mobile responsive overrides */}
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
+        @media (max-width: 768px) {
+          .wrap { padding: 0 1.25rem; }
+          section > .wrap > div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; gap: 2rem !important; }
+          section > .wrap > div[style*="grid-template-columns: repeat(4"] { grid-template-columns: 1fr 1fr !important; }
+          div[style*="paddingLeft: 3rem"] { padding-left: 0 !important; border-left: none !important; border-top: 1px solid var(--border) !important; padding-top: 2rem !important; }
+        }
+        @media (max-width: 480px) {
+          section > .wrap > div[style*="grid-template-columns: repeat(4"] { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </main>

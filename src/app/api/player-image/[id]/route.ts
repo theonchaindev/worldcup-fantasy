@@ -1,30 +1,21 @@
 import { prisma } from "@/lib/prisma";
 
 const posColors: Record<string, { bg: string; fg: string }> = {
-  GK:  { bg: "#2d1a00", fg: "#f59e0b" },
-  DEF: { bg: "#0a1f0a", fg: "#22c55e" },
-  MID: { bg: "#0a0f1f", fg: "#3b82f6" },
-  FWD: { bg: "#1f0a0a", fg: "#ef4444" },
+  GK:  { bg: "#FDF0E8", fg: "#C05A1A" },
+  DEF: { bg: "#EAF4EE", fg: "#1A7A3E" },
+  MID: { bg: "#E8EEF8", fg: "#1A4EA0" },
+  FWD: { bg: "#F8EAEA", fg: "#8A1A1A" },
 };
 
 function svgResponse(initials: string, position: string): Response {
-  const { bg, fg } = posColors[position] || { bg: "#111", fg: "#f0b429" };
+  const { bg, fg } = posColors[position] || { bg: "#F4EFE8", fg: "#7B1C2E" };
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100">
-  <defs>
-    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
-      <stop offset="0%" stop-color="${fg}" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="${bg}" stop-opacity="1"/>
-    </radialGradient>
-  </defs>
   <rect width="80" height="100" fill="${bg}" rx="4"/>
-  <rect width="80" height="100" fill="url(#bg)" rx="4"/>
-  <rect x="0" y="0" width="80" height="3" fill="${fg}" opacity="0.7" rx="2"/>
-  <!-- Silhouette body -->
-  <ellipse cx="40" cy="38" rx="14" ry="14" fill="${fg}" opacity="0.25"/>
-  <text x="40" y="43" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18" font-weight="900" fill="${fg}" opacity="0.9" letter-spacing="-0.5">${initials}</text>
-  <!-- Jersey shape hint -->
-  <path d="M24,60 Q40,52 56,60 L58,100 H22 Z" fill="${fg}" opacity="0.12"/>
-  <text x="40" y="90" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="${fg}" opacity="0.5" letter-spacing="1">${position}</text>
+  <rect x="0" y="0" width="80" height="3" fill="${fg}" rx="2"/>
+  <ellipse cx="40" cy="42" rx="13" ry="13" fill="${fg}" opacity="0.15"/>
+  <text x="40" y="48" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="700" fill="${fg}" opacity="0.85" letter-spacing="-0.5">${initials}</text>
+  <path d="M26,62 Q40,55 54,62 L56,100 H24 Z" fill="${fg}" opacity="0.1"/>
+  <text x="40" y="92" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="${fg}" opacity="0.45" letter-spacing="1.5">${position}</text>
 </svg>`;
   return new Response(svg, {
     headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=604800" },

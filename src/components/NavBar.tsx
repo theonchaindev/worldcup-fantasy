@@ -6,18 +6,18 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/team", label: "My Team" },
-  { href: "/transfers", label: "Transfers" },
-  { href: "/players", label: "Players" },
+  { href: "/dashboard",   label: "Dashboard" },
+  { href: "/team",        label: "My Team" },
+  { href: "/transfers",   label: "Transfers" },
+  { href: "/players",     label: "Players" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/leagues", label: "Leagues" },
-  { href: "/prizes", label: "Prizes" },
+  { href: "/leagues",     label: "Leagues" },
+  { href: "/prizes",      label: "Prizes" },
 ];
 
 export default function NavBar({ clubName }: { clubName?: string }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const [open, setOpen] = useState(false);
 
   async function logout() {
@@ -27,21 +27,25 @@ export default function NavBar({ clubName }: { clubName?: string }) {
 
   return (
     <nav
-      className="sticky top-0"
       style={{
-        background: "var(--bg)",
-        borderBottom: "1px solid var(--border-subtle)",
-        zIndex: "var(--z-sticky)",
+        background:   "var(--surface)",
+        borderBottom: "1px solid var(--border)",
+        position:     "sticky",
+        top:          0,
+        zIndex:       "var(--z-nav)",
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 flex items-center h-14 gap-6">
+      <div className="wrap" style={{ height: 56, display: "flex", alignItems: "center", gap: "2rem" }}>
         {/* Logo */}
-        <Link href="/dashboard" style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "var(--text-lg)", color: "var(--primary)", textDecoration: "none", flexShrink: 0, letterSpacing: "-0.01em" }}>
-          WC Fantasy
+        <Link
+          href="/dashboard"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontStyle: "italic", fontSize: "var(--t-lg)", color: "var(--maroon)", textDecoration: "none", flexShrink: 0, lineHeight: 1 }}
+        >
+          WCF
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-1 flex-1">
+        <div className="hidden md:flex" style={{ alignItems: "center", gap: 0, flex: 1 }}>
           {navLinks.map((l) => {
             const active = pathname.startsWith(l.href);
             return (
@@ -49,95 +53,97 @@ export default function NavBar({ clubName }: { clubName?: string }) {
                 key={l.href}
                 href={l.href}
                 style={{
-                  position: "relative",
-                  padding: "0.4rem 0.75rem",
-                  fontSize: "var(--text-sm)",
-                  fontWeight: active ? 600 : 500,
-                  color: active ? "var(--ink)" : "var(--ink-2)",
+                  position:    "relative",
+                  padding:     "0 0.75rem",
+                  height:      56,
+                  display:     "flex",
+                  alignItems:  "center",
+                  fontSize:    "var(--t-sm)",
+                  fontWeight:  active ? 600 : 400,
+                  color:       active ? "var(--maroon)" : "var(--muted)",
                   textDecoration: "none",
-                  borderRadius: "var(--r-md)",
-                  transition: "color var(--t-fast)",
-                  whiteSpace: "nowrap",
+                  transition:  "color var(--t-fast)",
+                  borderBottom: active ? "2px solid var(--maroon)" : "2px solid transparent",
+                  marginBottom: -1,
                 }}
               >
-                {active && (
-                  <motion.span
-                    layoutId="nav-underline"
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: "0.75rem",
-                      right: "0.75rem",
-                      height: 2,
-                      background: "var(--primary)",
-                      borderRadius: 1,
-                    }}
-                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                  />
-                )}
                 {l.label}
               </Link>
             );
           })}
         </div>
 
-        {/* Right side */}
-        <div className="hidden md:flex items-center gap-3 ml-auto">
+        {/* Right: club name + sign out */}
+        <div className="hidden md:flex" style={{ alignItems: "center", gap: "1rem", marginLeft: "auto", flexShrink: 0 }}>
           {clubName && (
-            <span style={{ fontSize: "var(--text-xs)", fontWeight: 600, color: "var(--ink-2)", background: "var(--surface)", border: "1px solid var(--border-subtle)", borderRadius: "var(--r-full)", padding: "0.25rem 0.75rem", maxWidth: "14ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span style={{
+              fontSize:   "var(--t-xs)",
+              fontWeight: 600,
+              color:      "var(--maroon)",
+              padding:    "0.25rem 0.75rem",
+              background: "var(--maroon-tint)",
+              border:     "1px solid rgba(123,28,46,0.18)",
+              borderRadius: 4,
+              maxWidth:   "16ch",
+              overflow:   "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}>
               {clubName}
             </span>
           )}
           <button
             onClick={logout}
-            style={{ fontSize: "var(--text-sm)", color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer", padding: "0.4rem 0.5rem", transition: "color var(--t-fast)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "var(--ink)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "var(--ink-3)")}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: "var(--t-sm)", color: "var(--subtle)", fontFamily: "var(--font-body)" }}
           >
             Sign out
           </button>
         </div>
 
-        {/* Mobile toggle */}
+        {/* Mobile hamburger */}
         <button
-          className="md:hidden ml-auto"
+          className="md:hidden"
           onClick={() => setOpen(!open)}
-          style={{ background: "none", border: "none", color: "var(--ink-2)", cursor: "pointer", padding: "0.25rem" }}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--navy)", marginLeft: "auto", padding: "0.25rem" }}
+          aria-label={open ? "Close menu" : "Open menu"}
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile dropdown */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            style={{ overflow: "hidden", borderTop: "1px solid var(--border-subtle)", background: "var(--bg)" }}
+            style={{ overflow: "hidden", borderTop: "1px solid var(--border)", background: "var(--surface)" }}
           >
-            <div className="px-4 py-3 flex flex-col gap-1">
+            <div className="wrap" style={{ padding: "0.75rem 1.25rem", display: "flex", flexDirection: "column", gap: 2 }}>
               {navLinks.map((l) => (
                 <Link
                   key={l.href}
                   href={l.href}
                   onClick={() => setOpen(false)}
                   style={{
-                    display: "block",
-                    padding: "0.65rem 0.75rem",
-                    fontSize: "var(--text-sm)",
-                    fontWeight: pathname.startsWith(l.href) ? 600 : 400,
-                    color: pathname.startsWith(l.href) ? "var(--primary)" : "var(--ink-2)",
+                    display:     "block",
+                    padding:     "0.625rem 0.75rem",
+                    fontSize:    "var(--t-sm)",
+                    fontWeight:  pathname.startsWith(l.href) ? 600 : 400,
+                    color:       pathname.startsWith(l.href) ? "var(--maroon)" : "var(--muted)",
+                    background:  pathname.startsWith(l.href) ? "var(--maroon-tint)" : "transparent",
+                    borderRadius: 4,
                     textDecoration: "none",
-                    borderRadius: "var(--r-md)",
-                    background: pathname.startsWith(l.href) ? "var(--primary-bg)" : "transparent",
                   }}
                 >
                   {l.label}
                 </Link>
               ))}
-              <button onClick={logout} style={{ textAlign: "left", padding: "0.65rem 0.75rem", fontSize: "var(--text-sm)", color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer" }}>
+              <button
+                onClick={logout}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "var(--t-sm)", color: "var(--subtle)", fontFamily: "var(--font-body)", textAlign: "left", padding: "0.625rem 0.75rem", marginTop: 4 }}
+              >
                 Sign out
               </button>
             </div>

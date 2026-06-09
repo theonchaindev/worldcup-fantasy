@@ -10,13 +10,13 @@ interface League { id: string; name: string; code: string; owner: { username: st
 
 export default function LeaguesPage() {
   const [leagues, setLeagues] = useState<League[]>([]);
-  const [user, setUser] = useState<{ clubName?: string } | null>(null);
-  const [tab, setTab] = useState<"my" | "create" | "join">("my");
+  const [user, setUser]       = useState<{ clubName?: string } | null>(null);
+  const [tab, setTab]         = useState<"my" | "create" | "join">("my");
   const [createName, setCreateName] = useState("");
-  const [joinCode, setJoinCode] = useState("");
-  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [joinCode, setJoinCode]     = useState("");
+  const [msg, setMsg]         = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [copied, setCopied]   = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(d => setUser(d.user));
@@ -26,47 +26,46 @@ export default function LeaguesPage() {
   function loadLeagues() { fetch("/api/leagues").then(r => r.json()).then(d => setLeagues(d.leagues || [])); }
 
   async function createLeague(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault(); setLoading(true);
     const res = await fetch("/api/leagues", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "create", name: createName }) });
     const data = await res.json();
-    if (res.ok) { setMsg({ type: "ok", text: `Created! Code: ${data.league.code}` }); loadLeagues(); setTab("my"); } else setMsg({ type: "err", text: data.error });
+    if (res.ok) { setMsg({ type: "ok", text: `League created — code: ${data.league.code}` }); loadLeagues(); setTab("my"); } else setMsg({ type: "err", text: data.error });
     setLoading(false);
   }
 
   async function joinLeague(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault(); setLoading(true);
     const res = await fetch("/api/leagues", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "join", code: joinCode.toUpperCase() }) });
     const data = await res.json();
     if (res.ok) { setMsg({ type: "ok", text: "Joined!" }); loadLeagues(); setTab("my"); } else setMsg({ type: "err", text: data.error });
     setLoading(false);
   }
 
-  function copyCode(code: string) { navigator.clipboard.writeText(code); setCopied(code); setTimeout(() => setCopied(null), 2000); }
+  function copy(code: string) { navigator.clipboard.writeText(code); setCopied(code); setTimeout(() => setCopied(null), 2000); }
 
-  const tabs = [{ key: "my", label: "My leagues" }, { key: "create", label: "Create" }, { key: "join", label: "Join" }] as const;
+  const Label = ({ children }: { children: React.ReactNode }) => (
+    <label style={{ display: "block", fontSize: "var(--t-xs)", fontWeight: 600, color: "var(--muted)", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "0.4rem" }}>{children}</label>
+  );
 
   return (
-    <div style={{ background: "var(--bg)", minHeight: "100vh" }}>
+    <div style={{ background: "var(--ground)", minHeight: "100vh" }}>
       <NavBar clubName={user?.clubName} />
-      <div className="max-w-4xl mx-auto px-4" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
-
+      <div className="wrap" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
         <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "var(--text-3xl)", color: "var(--ink)", marginBottom: "0.4rem" }}>Mini Leagues</h1>
-          <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)" }}>Compete privately with friends using an invite code.</p>
+          <h1 className="display" style={{ fontSize: "var(--t-2xl)", color: "var(--navy)", marginBottom: "0.25rem" }}>Mini Leagues</h1>
+          <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)" }}>Private competitions with friends using a six-character invite code.</p>
         </div>
 
         {msg && (
-          <div style={{ padding: "0.75rem 1rem", marginBottom: "1.25rem", borderRadius: "var(--r-md)", fontSize: "var(--text-sm)", background: msg.type === "ok" ? "oklch(0.56 0.18 145 / 0.1)" : "oklch(0.58 0.20 25 / 0.1)", border: `1px solid ${msg.type === "ok" ? "oklch(0.56 0.18 145 / 0.3)" : "oklch(0.58 0.20 25 / 0.3)"}`, color: msg.type === "ok" ? "var(--accent)" : "var(--danger)" }}>
+          <div style={{ padding: "0.75rem 1rem", borderRadius: 4, marginBottom: "1.25rem", fontSize: "var(--t-sm)", background: msg.type === "ok" ? "rgba(26,122,62,0.08)" : "rgba(160,26,26,0.08)", border: `1px solid ${msg.type === "ok" ? "rgba(26,122,62,0.25)" : "rgba(160,26,26,0.25)"}`, color: msg.type === "ok" ? "var(--pos-def)" : "#A01A1A" }}>
             {msg.text}
           </div>
         )}
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: "0.25rem", marginBottom: "1.5rem", background: "var(--surface)", borderRadius: "var(--r-md)", padding: "0.25rem", width: "fit-content" }}>
-          {tabs.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{ padding: "0.5rem 1.25rem", fontSize: "var(--text-sm)", fontWeight: 600, borderRadius: "var(--r-sm)", border: "none", cursor: "pointer", background: tab === t.key ? "var(--surface-high)" : "transparent", color: tab === t.key ? "var(--ink)" : "var(--ink-3)", transition: "all var(--t-fast)" }}>
+        <div style={{ display: "flex", gap: 0, marginBottom: "1.5rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 4, width: "fit-content", overflow: "hidden" }}>
+          {[{ key: "my", label: "My leagues" }, { key: "create", label: "Create" }, { key: "join", label: "Join" }].map(t => (
+            <button key={t.key} onClick={() => setTab(t.key as typeof tab)} style={{ padding: "0.5rem 1.25rem", fontSize: "var(--t-sm)", fontWeight: 600, border: "none", cursor: "pointer", background: tab === t.key ? "var(--maroon)" : "transparent", color: tab === t.key ? "#fff" : "var(--muted)", transition: "all var(--t-fast)" }}>
               {t.label}
             </button>
           ))}
@@ -76,39 +75,32 @@ export default function LeaguesPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
             {leagues.length === 0 ? (
               <div className="card" style={{ padding: "3rem", textAlign: "center" }}>
-                <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", marginBottom: "1.25rem" }}>No leagues yet. Create one or join with a code.</p>
-                <button onClick={() => setTab("create")} className="btn-primary">Create a league</button>
+                <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)", marginBottom: "1.25rem" }}>No leagues yet.</p>
+                <button onClick={() => setTab("create")} className="btn btn-primary">Create a league</button>
               </div>
             ) : leagues.map(league => (
               <motion.div key={league.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card" style={{ overflow: "hidden" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem", borderBottom: "1px solid var(--border-subtle)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem", borderBottom: "1px solid var(--border)" }}>
                   <div>
-                    <div style={{ fontSize: "var(--text-md)", fontWeight: 700, color: "var(--ink)" }}>{league.name}</div>
-                    <div style={{ fontSize: "var(--text-xs)", color: "var(--ink-3)", marginTop: "0.2rem" }}>Created by {league.owner.username} · {league.members.length} manager{league.members.length !== 1 ? "s" : ""}</div>
+                    <h2 style={{ fontSize: "var(--t-md)", fontWeight: 700, color: "var(--navy)" }}>{league.name}</h2>
+                    <p style={{ fontSize: "var(--t-xs)", color: "var(--subtle)", marginTop: "0.2rem" }}>{league.members.length} manager{league.members.length !== 1 ? "s" : ""} · Created by {league.owner.username}</p>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.4rem 0.875rem", background: "var(--surface-high)", border: "1px solid var(--border)", borderRadius: "var(--r-md)" }}>
-                    <code style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--primary)", letterSpacing: "0.08em" }}>{league.code}</code>
-                    <button onClick={() => copyCode(league.code)} style={{ background: "none", border: "none", cursor: "pointer", color: copied === league.code ? "var(--accent)" : "var(--ink-3)", lineHeight: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.4rem 0.875rem", background: "var(--ground)", border: "1px solid var(--border)", borderRadius: 4 }}>
+                    <code style={{ fontSize: "var(--t-xs)", fontWeight: 700, color: "var(--maroon)", letterSpacing: "0.1em", fontFamily: "monospace" }}>{league.code}</code>
+                    <button onClick={() => copy(league.code)} style={{ background: "none", border: "none", cursor: "pointer", color: copied === league.code ? "var(--pos-def)" : "var(--subtle)", lineHeight: 0 }}>
                       {copied === league.code ? <Check size={13} /> : <Copy size={13} />}
                     </button>
                   </div>
                 </div>
                 <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 36 }}>#</th>
-                      <th>Manager</th>
-                      <th>Club</th>
-                      <th style={{ textAlign: "right" }}>Pts</th>
-                    </tr>
-                  </thead>
+                  <thead><tr><th style={{ width: 36 }}>#</th><th>Manager</th><th>Club</th><th style={{ textAlign: "right" }}>Points</th></tr></thead>
                   <tbody>
                     {[...league.members].sort((a, b) => b.user.totalPoints - a.user.totalPoints).map((m, i) => (
                       <tr key={i}>
-                        <td style={{ color: "var(--ink-3)" }}>{i + 1}</td>
+                        <td style={{ color: "var(--subtle)" }}>{i + 1}</td>
                         <td style={{ fontWeight: 600 }}>{m.user.username}</td>
-                        <td style={{ color: "var(--ink-2)" }}>{getFlag(m.user.country)} {m.user.clubName}</td>
-                        <td style={{ textAlign: "right", fontFamily: "var(--font-display)", fontWeight: 800, color: "var(--primary)" }}>{m.user.totalPoints}</td>
+                        <td style={{ color: "var(--muted)" }}>{getFlag(m.user.country)} {m.user.clubName}</td>
+                        <td style={{ textAlign: "right", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "var(--t-md)", color: "var(--maroon)", fontVariantNumeric: "tabular-nums" }}>{m.user.totalPoints}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -120,32 +112,22 @@ export default function LeaguesPage() {
 
         {tab === "create" && (
           <div className="card" style={{ padding: "2rem", maxWidth: 440 }}>
-            <h2 style={{ fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink)", marginBottom: "0.5rem" }}>Create a league</h2>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", marginBottom: "1.5rem" }}>A unique invite code will be generated for you to share.</p>
+            <h2 className="display" style={{ fontSize: "var(--t-xl)", color: "var(--navy)", marginBottom: "0.35rem" }}>Create a league</h2>
+            <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)", marginBottom: "1.5rem" }}>A unique invite code will be generated to share with friends.</p>
             <form onSubmit={createLeague} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div>
-                <label className="label">League name</label>
-                <input type="text" placeholder="The Gaffer's League" value={createName} onChange={e => setCreateName(e.target.value)} required />
-              </div>
-              <button type="submit" disabled={loading} className="btn-primary" style={{ justifyContent: "center" }}>
-                {loading ? "Creating…" : "Create league"}
-              </button>
+              <div><Label>League name</Label><input type="text" placeholder="The Gaffer's League" value={createName} onChange={e => setCreateName(e.target.value)} required /></div>
+              <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%" }}>{loading ? "Creating…" : "Create league"}</button>
             </form>
           </div>
         )}
 
         {tab === "join" && (
           <div className="card" style={{ padding: "2rem", maxWidth: 440 }}>
-            <h2 style={{ fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink)", marginBottom: "0.5rem" }}>Join a league</h2>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--ink-2)", marginBottom: "1.5rem" }}>Enter the 6-character invite code shared by the league owner.</p>
+            <h2 className="display" style={{ fontSize: "var(--t-xl)", color: "var(--navy)", marginBottom: "0.35rem" }}>Join a league</h2>
+            <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)", marginBottom: "1.5rem" }}>Enter the six-character code shared by the league owner.</p>
             <form onSubmit={joinLeague} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div>
-                <label className="label">Invite code</label>
-                <input type="text" placeholder="ABC123" maxLength={6} value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())} required style={{ textTransform: "uppercase", letterSpacing: "0.12em", textAlign: "center", fontSize: "var(--text-lg)", fontWeight: 700 }} />
-              </div>
-              <button type="submit" disabled={loading} className="btn-primary" style={{ justifyContent: "center" }}>
-                {loading ? "Joining…" : "Join league"}
-              </button>
+              <div><Label>Invite code</Label><input type="text" placeholder="ABC123" maxLength={6} value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())} required style={{ textTransform: "uppercase", letterSpacing: "0.15em", textAlign: "center", fontSize: "var(--t-lg)", fontWeight: 700 }} /></div>
+              <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: "100%" }}>{loading ? "Joining…" : "Join league"}</button>
             </form>
           </div>
         )}
