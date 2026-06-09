@@ -21,15 +21,23 @@ export default function TransfersPage() {
   const [saving, setSaving]         = useState(false);
   const [transfers, setTransfers]   = useState<{ outId: string; inId: string }[]>([]);
   const [teamData, setTeamData]     = useState<{ formation: string; captainId: string | null; viceCaptainId: string | null } | null>(null);
+  const [gw, setGw]                 = useState<{ number: number; name: string; isPreSeason: boolean; isLocked: boolean } | null>(null);
+  const [transfersRemaining, setTransfersRemaining] = useState<number>(3);
 
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(d => setUser(d.user));
     fetch("/api/players").then(r => r.json()).then(d => setAllPlayers(d.players || []));
-    fetch("/api/team").then(r => r.json()).then(d => { if (d.team) { setTeamData(d.team); setMyPlayers(d.team.players); } });
+    fetch("/api/team").then(r => r.json()).then(d => {
+      setGw(d.gameweek || null);
+      setTransfersRemaining(d.transfersRemaining ?? 3);
+      if (d.team) { setTeamData(d.team); setMyPlayers(d.team.players); }
+    });
   }, []);
 
   const myIds    = myPlayers.map(p => p.player.id);
   const teamValue = myPlayers.reduce((s, p) => s + p.player.value, 0);
+  const isPreSeason = gw?.isPreSeason ?? true;
+  const transfersLeft = Math.max(0, transfersRemaining - transfers.length);
 
   const filteredIn = allPlayers.filter(p => {
     if (myIds.includes(p.id)) return false;
@@ -44,6 +52,15 @@ export default function TransfersPage() {
     if (!selectedOut) return;
     const diff = np.value - selectedOut.player.value;
     if (teamValue + diff > 100) { setMsg({ type: "err", text: `Over budget by £${(teamValue + diff - 100).toFixed(1)}m` }); return; }
+    // Max 3 per nation (excluding the player being swapped out)
+    const fromNation = myPlayers.filter(p => p.player.country === np.country && p.player.id !== selectedOut.player.id).length;
+    if (fromNation >= 3) { setMsg({ type: "err", text: `Max 3 players from one nation — already 3 from ${np.country}` }); return; }
+    // Transfer limit (in-season). Swapping a player you've already swapped this session doesn't add a new transfer.
+    const alreadySwapping = transfers.some(t => t.outId === selectedOut.player.id);
+    if (!isPreSeason && !alreadySwapping && transfers.length >= transfersRemaining) {
+      setMsg({ type: "err", text: `Only ${transfersRemaining} transfer${transfersRemaining === 1 ? "" : "s"} left this gameweek` });
+      return;
+    }
     setTransfers(prev => [...prev.filter(t => t.outId !== selectedOut.player.id), { outId: selectedOut.player.id, inId: np.id }]);
     setMyPlayers(prev => prev.map(p => p.player.id === selectedOut.player.id ? { ...p, player: np } : p));
     setSelectedOut(null); setMsg(null);
@@ -54,7 +71,11 @@ export default function TransfersPage() {
     setSaving(true);
     const res = await fetch("/api/team", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ formation: teamData.formation, captainId: teamData.captainId, viceCaptainId: teamData.viceCaptainId, players: myPlayers.map(p => ({ playerId: p.player.id, isSub: p.isSub, slot: p.slot })) }) });
     const data = await res.json();
-    if (res.ok) { setMsg({ type: "ok", text: `${transfers.length} transfer${transfers.length !== 1 ? "s" : ""} saved.` }); setTransfers([]); } else setMsg({ type: "err", text: data.error });
+    if (res.ok) {
+      setMsg({ type: "ok", text: `${transfers.length} transfer${transfers.length !== 1 ? "s" : ""} saved.` });
+      setTransfers([]);
+      if (typeof data.transfersRemaining === "number") setTransfersRemaining(data.transfersRemaining);
+    } else setMsg({ type: "err", text: data.error });
     setSaving(false);
   }
 
@@ -66,14 +87,29 @@ export default function TransfersPage() {
           <div>
             <h1 className="display" style={{ fontSize: "var(--t-2xl)", color: "var(--navy)", marginBottom: "0.25rem" }}>Transfers</h1>
             <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)" }}>
+              {gw && <span style={{ color: "var(--magenta)", fontWeight: 700 }}>GW{gw.number} · </span>}
               Budget: <span style={{ color: "var(--navy)", fontWeight: 600 }}>£{teamValue.toFixed(1)}m / £100m</span>
               {transfers.length > 0 && <span style={{ color: "var(--maroon)", fontWeight: 600 }}> · {transfers.length} pending</span>}
             </p>
           </div>
-          {transfers.length > 0 && (
-            <button onClick={save} disabled={saving} className="btn btn-primary">{saving ? "Saving…" : `Save ${transfers.length} transfer${transfers.length !== 1 ? "s" : ""}`}</button>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ fontSize: "var(--t-xs)", color: "var(--subtle)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Transfers left</p>
+              <p className="display" style={{ fontSize: "var(--t-lg)", color: isPreSeason ? "var(--gold)" : transfersLeft === 0 ? "#A01A1A" : "var(--pos-def)" }}>
+                {isPreSeason ? "Unlimited" : `${transfersLeft} / 3`}
+              </p>
+            </div>
+            {transfers.length > 0 && (
+              <button onClick={save} disabled={saving} className="btn btn-primary">{saving ? "Saving…" : `Save ${transfers.length} transfer${transfers.length !== 1 ? "s" : ""}`}</button>
+            )}
+          </div>
         </div>
+
+        {isPreSeason && (
+          <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)", marginBottom: "1.25rem" }}>
+            Pre-season: <strong style={{ color: "var(--gold)" }}>unlimited transfers</strong> until the Gameweek&nbsp;1 deadline.
+          </p>
+        )}
 
         {msg && (
           <div style={{ padding: "0.75rem 1rem", borderRadius: 4, marginBottom: "1.25rem", fontSize: "var(--t-sm)", background: msg.type === "ok" ? "rgba(26,122,62,0.08)" : "rgba(160,26,26,0.08)", border: `1px solid ${msg.type === "ok" ? "rgba(26,122,62,0.25)" : "rgba(160,26,26,0.25)"}`, color: msg.type === "ok" ? "var(--pos-def)" : "#A01A1A" }}>

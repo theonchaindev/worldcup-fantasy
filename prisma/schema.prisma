@@ -53,14 +53,16 @@ model Player {
 }
 
 model UserTeam {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id])
-  formation     String   @default("4-3-3")
-  captainId     String?
-  viceCaptainId String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+  formation          String   @default("4-3-3")
+  captainId          String?
+  viceCaptainId      String?
+  transfersRemaining Int      @default(3)
+  lastSyncedGw       Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   players UserPlayer[]
 }

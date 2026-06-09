@@ -46,23 +46,55 @@ export default function TeamPage() {
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
   const [message, setMessage]       = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [gw, setGw]                 = useState<{ number: number; name: string; deadline: string; isPreSeason: boolean; isLocked: boolean } | null>(null);
+  const [transfersRemaining, setTransfersRemaining] = useState<number>(3);
+  const [savedIds, setSavedIds]     = useState<string[]>([]);   // squad as last saved (for live transfer counting)
+  const [hasTeam, setHasTeam]       = useState(false);
+  const [countdown, setCountdown]   = useState("");
 
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(d => setUser(d.user));
     fetch("/api/players").then(r => r.json()).then(d => setAllPlayers(d.players || []));
     fetch("/api/team").then(r => r.json()).then(d => {
+      setGw(d.gameweek || null);
+      setTransfersRemaining(d.transfersRemaining ?? 3);
       if (!d.team) return;
+      setHasTeam(true);
       setFormation(d.team.formation); setCaptainId(d.team.captainId); setViceCaptainId(d.team.viceCaptainId);
       const ns = buildSlots(d.team.formation);
       for (const up of d.team.players) { const sl = ns.find(s => s.slot === up.slot); if (sl) sl.playerId = up.playerId; }
       setSlots(ns);
+      setSavedIds(d.team.players.map((up: { playerId: string }) => up.playerId));
     });
   }, []);
+
+  // Deadline countdown
+  useEffect(() => {
+    if (!gw?.deadline) return;
+    const tick = () => {
+      const diff = new Date(gw.deadline).getTime() - Date.now();
+      if (diff <= 0) { setCountdown("Deadline passed"); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      setCountdown(d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m`);
+    };
+    tick();
+    const iv = setInterval(tick, 30000);
+    return () => clearInterval(iv);
+  }, [gw?.deadline]);
 
   const selectedIds    = slots.map(s => s.playerId).filter(Boolean) as string[];
   const selectedPlayers = allPlayers.filter(p => selectedIds.includes(p.id));
   const totalValue     = selectedPlayers.reduce((s, p) => s + p.value, 0);
   const remaining      = 100 - totalValue;
+
+  // Live transfer counting (in-season only): how many of the current 15 differ from the saved squad
+  const isPreSeason = gw?.isPreSeason ?? true;
+  const pendingTransfers = hasTeam && !isPreSeason
+    ? selectedIds.filter(id => !savedIds.includes(id)).length
+    : 0;
+  const transfersLeftNow = Math.max(0, transfersRemaining - pendingTransfers);
 
   const pickerPlayers = allPlayers.filter(p => {
     if (selectedIds.includes(p.id) && p.id !== activeSlot?.playerId) return false;
@@ -91,6 +123,15 @@ export default function TeamPage() {
     // Max 3 players from one nation
     const fromNation = selectedPlayers.filter(p => p.country === player.country && p.id !== curr?.id).length;
     if (fromNation >= 3) { setMessage({ type: "err", text: `Max 3 players from one nation — you already have 3 from ${player.country}` }); return; }
+    // Transfer limit (in-season, existing team). Simulate resulting squad and count changes vs saved.
+    if (hasTeam && !isPreSeason) {
+      const resultIds = selectedIds.filter(id => id !== curr?.id).concat(player.id);
+      const changes = resultIds.filter(id => !savedIds.includes(id)).length;
+      if (changes > transfersRemaining) {
+        setMessage({ type: "err", text: `Only ${transfersRemaining} transfer${transfersRemaining === 1 ? "" : "s"} left this gameweek` });
+        return;
+      }
+    }
     setSlots(prev => prev.map(s => s.slot === activeSlot.slot ? { ...s, playerId: player.id } : s));
     const next = slots.filter(s => !s.playerId && s.position === activeSlot.position && s.slot !== activeSlot.slot);
     if (next.length > 0) { setActiveSlot(next[0]); setFilterPos(next[0].position || "ALL"); } else setActiveSlot(null);
@@ -146,8 +187,17 @@ export default function TeamPage() {
       body: JSON.stringify({ formation, captainId: cap, viceCaptainId: vc, players: slots.filter(s => s.playerId).map(s => ({ playerId: s.playerId, isSub: s.isSub, slot: s.slot })) }),
     });
     const data = await res.json();
-    if (res.ok) { setCaptainId(cap); setViceCaptainId(vc); setMessage({ type: "ok", text: "Team saved!" }); setSaved(true); setTimeout(() => setSaved(false), 2000); }
-    else setMessage({ type: "err", text: data.detail ? `${data.error}: ${data.detail}` : data.error });
+    if (res.ok) {
+      setCaptainId(cap); setViceCaptainId(vc);
+      setHasTeam(true);
+      setSavedIds(selectedIds);                                   // new baseline for transfer counting
+      if (typeof data.transfersRemaining === "number") setTransfersRemaining(data.transfersRemaining);
+      const label = gw ? (isPreSeason ? `Squad confirmed for GW${gw.number}` : `Saved for GW${gw.number}`) : "Team saved!";
+      setMessage({ type: "ok", text: label });
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+    } else {
+      setMessage({ type: "err", text: data.detail ? `${data.error}: ${data.detail}` : data.error });
+    }
     setSaving(false);
   }
 
@@ -222,7 +272,7 @@ export default function TeamPage() {
       <div className="wrap" style={{ paddingTop: "2rem", paddingBottom: "4rem" }}>
         {/* Club name display heading */}
         {user?.clubName && (
-          <div style={{ marginBottom: "2rem" }}>
+          <div style={{ marginBottom: "1.25rem" }}>
             <h1 className="display" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "var(--navy)", textTransform: "uppercase", lineHeight: 0.92, letterSpacing: "-0.02em" }}>
               {user.clubName}
             </h1>
@@ -230,6 +280,36 @@ export default function TeamPage() {
               {selectedIds.length}/15 players selected · £{remaining.toFixed(1)}m remaining
             </p>
           </div>
+        )}
+
+        {/* Gameweek banner */}
+        {gw && (
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "1rem", justifyContent: "space-between", padding: "1rem 1.25rem", marginBottom: "1.5rem", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, borderLeft: "4px solid var(--maroon)" }}>
+            <div>
+              <p style={{ fontSize: "var(--t-xs)", fontWeight: 700, color: "var(--magenta)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                Picking for · Gameweek {gw.number}
+              </p>
+              <p className="display" style={{ fontSize: "var(--t-lg)", color: "var(--navy)", marginTop: "0.15rem" }}>{gw.name}</p>
+            </div>
+            <div style={{ display: "flex", gap: "1.75rem", flexWrap: "wrap" }}>
+              <div>
+                <p style={{ fontSize: "var(--t-xs)", color: "var(--subtle)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{gw.isLocked ? "Status" : "Deadline in"}</p>
+                <p style={{ fontSize: "var(--t-md)", fontWeight: 700, color: gw.isLocked ? "#A01A1A" : "var(--navy)", fontVariantNumeric: "tabular-nums" }}>{gw.isLocked ? "Locked" : countdown}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: "var(--t-xs)", color: "var(--subtle)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Transfers</p>
+                <p style={{ fontSize: "var(--t-md)", fontWeight: 700, color: isPreSeason ? "var(--gold)" : transfersLeftNow === 0 ? "#A01A1A" : "var(--pos-def)", fontVariantNumeric: "tabular-nums" }}>
+                  {isPreSeason ? "Unlimited" : `${transfersLeftNow} / 3`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isPreSeason && (
+          <p style={{ fontSize: "var(--t-sm)", color: "var(--muted)", marginBottom: "1.25rem", marginTop: "-0.5rem" }}>
+            Pre-season: <strong style={{ color: "var(--gold)" }}>unlimited transfers</strong> until the Gameweek&nbsp;1 deadline. After that, you get 3 free transfers each gameweek.
+          </p>
         )}
 
         {/* Toolbar */}
@@ -248,15 +328,18 @@ export default function TeamPage() {
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "1.25rem", fontSize: "var(--t-sm)" }}>
             <span style={{ color: remaining < 0 ? "#A01A1A" : remaining < 5 ? "var(--gold)" : "var(--pos-def)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>£{remaining.toFixed(1)}m left</span>
             <span style={{ color: selectedIds.length === 15 ? "var(--pos-def)" : "var(--muted)", fontWeight: 600 }}>{selectedIds.length}/15</span>
+            {!isPreSeason && hasTeam && pendingTransfers > 0 && (
+              <span style={{ color: "var(--magenta)", fontWeight: 600 }}>{pendingTransfers} transfer{pendingTransfers === 1 ? "" : "s"} pending</span>
+            )}
           </div>
 
-          <button onClick={saveTeam} disabled={saving} className="btn btn-primary" style={{ padding: "0.5rem 1.25rem", display: "flex", alignItems: "center", gap: "0.375rem" }}>
+          <button onClick={saveTeam} disabled={saving || (gw?.isLocked ?? false)} className="btn btn-primary" style={{ padding: "0.5rem 1.25rem", display: "flex", alignItems: "center", gap: "0.375rem" }}>
             <AnimatePresence mode="wait">
               {saved ? (
                 <motion.span key="ok" initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
                   <CheckCircle size={13} /> Saved
                 </motion.span>
-              ) : saving ? "Saving…" : "Save team"}
+              ) : saving ? "Saving…" : gw?.isLocked ? "Gameweek locked" : gw ? `Confirm for GW${gw.number}` : "Save team"}
             </AnimatePresence>
           </button>
         </div>
