@@ -141,7 +141,7 @@ export default function PlayersPage() {
       <AnimatePresence>
         {selected && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: "fixed", inset: 0, background: "rgba(12,29,56,0.5)", backdropFilter: "blur(4px)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
             onClick={() => setSelected(null)}>
             <motion.div initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
               transition={{ duration: 0.22 }} className="card" style={{ maxWidth: 380, width: "100%", overflow: "hidden" }} onClick={e => e.stopPropagation()}>

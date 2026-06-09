@@ -77,9 +77,9 @@ export default function PlayerCard({ player, isCaptain, isViceCaptain, isSub, on
           width: 18, height: 18, borderRadius: "50%",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 9, fontWeight: 900, letterSpacing: "-0.02em",
-          background: isCaptain ? "var(--maroon)" : "var(--navy)",
+          background: isCaptain ? "var(--maroon)" : "var(--magenta)",
           color: "#fff",
-          boxShadow: isCaptain ? "0 0 0 2px white, 0 0 8px rgba(123,28,46,0.4)" : "0 0 0 2px white",
+          boxShadow: "0 0 0 2px var(--ground)",
         }}>
           {isCaptain ? "C" : "V"}
         </div>
@@ -100,8 +100,8 @@ export default function PlayerCard({ player, isCaptain, isViceCaptain, isSub, on
       <div style={{
         width: 52, height: 52, borderRadius: "50%", overflow: "hidden",
         background: "var(--ground)", marginBottom: 5, flexShrink: 0,
-        border: `2px solid ${isCaptain ? "var(--maroon)" : isViceCaptain ? "var(--navy)" : "var(--border)"}`,
-        boxShadow: isCaptain ? "0 0 0 3px rgba(123,28,46,0.18)" : "none",
+        border: `2px solid ${isCaptain ? "var(--maroon)" : isViceCaptain ? "var(--magenta)" : "var(--border-mid)"}`,
+        boxShadow: isCaptain ? "0 0 0 3px var(--maroon-tint)" : isViceCaptain ? "0 0 0 3px var(--magenta-tint)" : "none",
         position: "relative",
       }}>
         <img
@@ -121,25 +121,25 @@ export default function PlayerCard({ player, isCaptain, isViceCaptain, isSub, on
         </div>
       </div>
 
-      {/* Name tag — white card on the pitch */}
+      {/* Name tag — dark broadcast chip on the pitch */}
       <div style={{
-        background: "rgba(255,255,255,0.96)",
-        border: `1px solid ${isCaptain ? "var(--maroon)" : "var(--border)"}`,
+        background: "#0B0B12",
+        border: `1.5px solid ${isCaptain ? "var(--maroon)" : isViceCaptain ? "var(--magenta)" : "rgba(255,255,255,0.14)"}`,
         borderRadius: 4,
         padding: "2px 6px",
         maxWidth: 72,
-        boxShadow: "0 1px 4px rgba(12,29,56,0.12)",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
       }}>
-        <div style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "0.58rem", color: "var(--navy)", maxWidth: 60, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.01em" }}>
+        <div style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "0.58rem", color: "#fff", maxWidth: 60, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.02em" }}>
           {lastName}
         </div>
-        <div style={{ fontSize: "0.52rem", fontWeight: 600, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>
+        <div style={{ fontSize: "0.52rem", fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>
           £{player.value}m
         </div>
       </div>
 
       {player.totalPoints > 0 && (
-        <div style={{ marginTop: 3, fontSize: "0.5rem", fontWeight: 700, color: "var(--maroon)", background: "var(--maroon-tint)", border: "1px solid rgba(123,28,46,0.15)", borderRadius: 100, padding: "1px 6px" }}>
+        <div style={{ marginTop: 3, fontSize: "0.5rem", fontWeight: 800, color: "#0B0B12", background: "var(--gold)", borderRadius: 100, padding: "1px 7px" }}>
           {player.totalPoints} pts
         </div>
       )}

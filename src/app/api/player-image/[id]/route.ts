@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma";
 
 const posColors: Record<string, { bg: string; fg: string }> = {
-  GK:  { bg: "#FDF0E8", fg: "#C05A1A" },
-  DEF: { bg: "#EAF4EE", fg: "#1A7A3E" },
-  MID: { bg: "#E8EEF8", fg: "#1A4EA0" },
-  FWD: { bg: "#F8EAEA", fg: "#8A1A1A" },
+  GK:  { bg: "#1C1C2B", fg: "#FFB020" },
+  DEF: { bg: "#1C1C2B", fg: "#00E08A" },
+  MID: { bg: "#1C1C2B", fg: "#2F6BFF" },
+  FWD: { bg: "#1C1C2B", fg: "#FF2E93" },
 };
 
 function svgResponse(initials: string, position: string): Response {
-  const { bg, fg } = posColors[position] || { bg: "#F4EFE8", fg: "#7B1C2E" };
+  const { bg, fg } = posColors[position] || { bg: "#14141F", fg: "#2F6BFF" };
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100">
   <rect width="80" height="100" fill="${bg}" rx="4"/>
   <rect x="0" y="0" width="80" height="3" fill="${fg}" rx="2"/>
