@@ -220,7 +220,7 @@ export default function TeamPage() {
             return (
               <div key={slot.slot} style={{ position: "relative" }}>
                 {player ? (
-                  <div onClick={() => { setContextSlot(contextSlot?.slot === slot.slot ? null : slot); setActiveSlot(null); }}>
+                  <div onClick={e => { e.stopPropagation(); setContextSlot(contextSlot?.slot === slot.slot ? null : slot); setActiveSlot(null); }}>
                     <PlayerCard player={player} isCaptain={captainId === player.id} isViceCaptain={viceCaptainId === player.id} isSub={slot.isSub} onRemove={() => removePlayer(slot)} />
                     <AnimatePresence>
                       {contextSlot?.slot === slot.slot && (
