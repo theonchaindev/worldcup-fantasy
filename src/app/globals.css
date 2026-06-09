@@ -78,6 +78,8 @@ body::before {
   line-height: 0.88;
   letter-spacing: 0.005em;
   text-transform: uppercase;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 .display-italic { /* repurposed as wordmark */
   font-family: var(--font-display);
@@ -88,20 +90,26 @@ body::before {
 }
 
 /* ─── Signature: bleeding score number ──────────────────────────────────── */
-.score-bleed-wrap { overflow: hidden; }
+.score-bleed-wrap { overflow: hidden; line-height: 0; }
 .score-bleed {
   display: block;
   font-family: var(--font-display);
   font-weight: 400;
   color: var(--gold);
-  font-size: clamp(80px, 17vw, 160px);
-  line-height: 0.82;
-  letter-spacing: -0.01em;
-  text-align: right;
-  transform: translateX(5%);
+  font-size: clamp(56px, 11vw, 108px);
+  line-height: 0.92;
+  letter-spacing: -0.005em;
+  text-align: left;
   white-space: nowrap;
   text-transform: uppercase;
-  text-shadow: 0 0 40px rgba(204, 255, 0, 0.25);
+  text-shadow: 0 0 40px rgba(204, 255, 0, 0.22);
+  padding-block: 0.06em;
+}
+.score-bleed .unit {
+  font-size: 0.42em;
+  color: var(--muted);
+  margin-left: 0.15em;
+  letter-spacing: 0.02em;
 }
 
 /* ─── Layout ─────────────────────────────────────────────────────────────── */

@@ -28,7 +28,7 @@ export default async function PrizesPage() {
         <div className="wrap" style={{ paddingTop: "3rem", paddingBottom: "2rem" }}>
           <p style={{ fontSize: "var(--t-xs)", fontWeight: 600, color: "var(--subtle)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: "0.25rem" }}>Current prize pool</p>
           <div className="score-bleed-wrap">
-            <span className="score-bleed">{pot} SOL</span>
+            <span className="score-bleed">{pot}<span className="unit">SOL</span></span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid var(--border)" }}>
             <div>
