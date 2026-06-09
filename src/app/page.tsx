@@ -39,7 +39,11 @@ export default async function LandingPage() {
     select: { id: true, name: true, position: true, country: true, value: true },
   }).catch(() => []);
 
-  const squadPreview = lineup.slice(0, 5);
+  // Curated marquee faces for the hero cluster — Harry Kane leads as the England striker
+  const heroNames = ["Harry Kane", "Kylian Mbappé", "Vinicius Jr", "Jude Bellingham", "Lionel Messi"];
+  const byName = new Map(lineup.map((p) => [p.name, p]));
+  const curated = heroNames.map((n) => byName.get(n)).filter(Boolean) as typeof lineup;
+  const squadPreview = [...curated, ...lineup.filter((p) => !heroNames.includes(p.name))].slice(0, 5);
   const flags = Object.entries(countryFlags).filter(([, f]) => f.length <= 8).slice(0, 32);
 
   return (
