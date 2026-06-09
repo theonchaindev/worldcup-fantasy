@@ -15,7 +15,7 @@ const players = [
   { name: "Bukayo Saka", position: "MID", country: "England", clubTeam: "Arsenal", value: 8, sofifaId: "246669" },
   { name: "Jude Bellingham", position: "MID", country: "England", clubTeam: "Real Madrid", value: 10, sofifaId: "237692" },
   { name: "Declan Rice", position: "MID", country: "England", clubTeam: "Arsenal", value: 6.5, sofifaId: "246470" },
-  { name: "Phil Foden", position: "MID", country: "England", clubTeam: "Man City", value: 7.5, sofifaId: "237633" },
+  { name: "Eberechi Eze", position: "MID", country: "England", clubTeam: "Arsenal", value: 7.5, sofifaId: "246574" },
   { name: "Cole Palmer", position: "MID", country: "England", clubTeam: "Chelsea", value: 7, sofifaId: "261130" },
   { name: "Harry Kane", position: "FWD", country: "England", clubTeam: "Bayern Munich", value: 9, sofifaId: "202126" },
   { name: "Ollie Watkins", position: "FWD", country: "England", clubTeam: "Aston Villa", value: 6, sofifaId: "221566" },
