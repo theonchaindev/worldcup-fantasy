@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
+import { getFlag } from "@/lib/flags";
 
 interface Player {
   id: string;
@@ -130,10 +131,13 @@ export default function PlayerCard({ player, isCaptain, isViceCaptain, isSub, on
         maxWidth: 72,
         boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
       }}>
-        <div style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "0.58rem", color: "#fff", maxWidth: 60, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.02em" }}>
-          {lastName}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3, maxWidth: 68 }}>
+          <span style={{ fontSize: "0.6rem", lineHeight: 1, flexShrink: 0 }}>{getFlag(player.country)}</span>
+          <span style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "0.58rem", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.02em" }}>
+            {lastName}
+          </span>
         </div>
-        <div style={{ fontSize: "0.52rem", fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>
+        <div style={{ fontSize: "0.52rem", fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums", textAlign: "center" }}>
           £{player.value}m
         </div>
       </div>

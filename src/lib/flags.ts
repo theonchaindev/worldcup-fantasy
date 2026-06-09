@@ -49,6 +49,15 @@ export const countryFlags: Record<string, string> = {
   "Paraguay": "🇵🇾",
   "Uzbekistan": "🇺🇿",
   "Jordan": "🇯🇴",
+  "Bosnia and Herzegovina": "🇧🇦",
+  "Cape Verde": "🇨🇻",
+  "Curacao": "🇨🇼",
+  "Czechia": "🇨🇿",
+  "DR Congo": "🇨🇩",
+  "Haiti": "🇭🇹",
+  "Norway": "🇳🇴",
+  "Sweden": "🇸🇪",
+  "Tunisia": "🇹🇳",
 };
 
 export function getFlag(country: string): string {

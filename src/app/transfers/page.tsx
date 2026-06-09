@@ -116,7 +116,7 @@ export default function TransfersPage() {
                                 {up.isSub && <span className="chip chip-muted" style={{ fontSize: "0.6rem" }}>SUB</span>}
                                 {isNew && <span className="chip chip-maroon" style={{ fontSize: "0.6rem" }}>NEW</span>}
                               </div>
-                              <p style={{ fontSize: "var(--t-xs)", color: "var(--muted)" }}>{getFlag(up.player.country)} {up.player.clubTeam}</p>
+                              <p style={{ fontSize: "var(--t-xs)", color: "var(--muted)" }}>{getFlag(up.player.country)} {up.player.clubTeam || up.player.country}</p>
                             </div>
                             <div style={{ textAlign: "right", flexShrink: 0 }}>
                               <p style={{ fontSize: "var(--t-sm)", fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>£{up.player.value}m</p>
@@ -169,7 +169,7 @@ export default function TransfersPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: "var(--t-sm)", fontWeight: 600, color: "var(--navy)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
-                        <p style={{ fontSize: "var(--t-xs)", color: "var(--muted)" }}>{getFlag(p.country)} {p.clubTeam}</p>
+                        <p style={{ fontSize: "var(--t-xs)", color: "var(--muted)" }}>{getFlag(p.country)} {p.clubTeam || p.country}</p>
                       </div>
                       <div style={{ textAlign: "right", flexShrink: 0 }}>
                         <p style={{ fontSize: "var(--t-sm)", fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>£{p.value}m</p>

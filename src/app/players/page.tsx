@@ -125,7 +125,7 @@ export default function PlayersPage() {
                   </td>
                   <td><span className={`pos ${posClass[p.position]}`}>{p.position}</span></td>
                   <td className="hidden md:table-cell" style={{ color: "var(--muted)" }}>{getFlag(p.country)}</td>
-                  <td className="hidden lg:table-cell" style={{ color: "var(--subtle)", maxWidth: "10rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.clubTeam}</td>
+                  <td className="hidden lg:table-cell" style={{ color: "var(--subtle)", maxWidth: "10rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.clubTeam || p.country}</td>
                   <td style={{ textAlign: "right", fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>£{p.value}m</td>
                   <td style={{ textAlign: "right", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "var(--t-md)", color: "var(--maroon)", fontVariantNumeric: "tabular-nums" }}>{p.totalPoints}</td>
                   <td className="hidden sm:table-cell" style={{ textAlign: "right", color: "var(--muted)" }}>{p.goals}</td>
@@ -160,7 +160,7 @@ export default function PlayersPage() {
                     <span className={`pos ${posClass[selected.position]}`}>{selected.position}</span>
                     <span style={{ fontSize: "var(--t-xs)", color: "var(--muted)" }}>{getFlag(selected.country)} {selected.country}</span>
                   </div>
-                  <p style={{ fontSize: "var(--t-xs)", color: "var(--subtle)" }}>{selected.clubTeam}</p>
+                  <p style={{ fontSize: "var(--t-xs)", color: "var(--subtle)" }}>{selected.clubTeam || selected.country}</p>
                 </div>
                 <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--subtle)" }}><X size={18} /></button>
               </div>

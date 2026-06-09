@@ -43,6 +43,15 @@ export async function POST(req: Request) {
       return Response.json({ error: `Squad value £${totalValue.toFixed(1)}m exceeds £100m budget` }, { status: 400 });
     }
 
+    // Max 3 players from any single nation
+    const byNation: Record<string, number> = {};
+    for (const p of playerData) {
+      byNation[p.country] = (byNation[p.country] || 0) + 1;
+      if (byNation[p.country] > 3) {
+        return Response.json({ error: `Max 3 players from one nation — too many from ${p.country}` }, { status: 400 });
+      }
+    }
+
     // Upsert team
     const existingTeam = await prisma.userTeam.findUnique({ where: { userId: session.userId } });
 

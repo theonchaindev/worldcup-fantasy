@@ -88,6 +88,9 @@ export default function TeamPage() {
     const newTotal = totalValue - (curr?.value || 0) + player.value;
     if (newTotal > 100) { setMessage({ type: "err", text: `Over budget by £${(newTotal - 100).toFixed(1)}m` }); return; }
     if (selectedIds.includes(player.id) && player.id !== activeSlot.playerId) { setMessage({ type: "err", text: `${player.name} is already in your squad` }); return; }
+    // Max 3 players from one nation
+    const fromNation = selectedPlayers.filter(p => p.country === player.country && p.id !== curr?.id).length;
+    if (fromNation >= 3) { setMessage({ type: "err", text: `Max 3 players from one nation — you already have 3 from ${player.country}` }); return; }
     setSlots(prev => prev.map(s => s.slot === activeSlot.slot ? { ...s, playerId: player.id } : s));
     const next = slots.filter(s => !s.playerId && s.position === activeSlot.position && s.slot !== activeSlot.slot);
     if (next.length > 0) { setActiveSlot(next[0]); setFilterPos(next[0].position || "ALL"); } else setActiveSlot(null);
@@ -110,13 +113,17 @@ export default function TeamPage() {
       ...Array(fwd).fill(null).map(() => ({ pos: "FWD", isSub: false })),
     ];
     const ns = buildSlots(formation); const picked: string[] = []; let budget = 100;
+    const natCount: Record<string, number> = {};
     for (let i = 0; i < slotOrder.length; i++) {
       const { pos, isSub } = slotOrder[i];
       const slotsLeft = slotOrder.length - i - 1;
       const maxSpend = budget - slotsLeft * 3.5;
-      const pool = [...allPlayers.filter(p => p.position === pos && !picked.includes(p.id) && p.value <= maxSpend)].sort(() => Math.random() - 0.5);
+      const pool = [...allPlayers.filter(p =>
+        p.position === pos && !picked.includes(p.id) && p.value <= maxSpend && (natCount[p.country] || 0) < 3
+      )].sort(() => Math.random() - 0.5);
       if (!pool[0]) continue;
       picked.push(pool[0].id); budget -= pool[0].value;
+      natCount[pool[0].country] = (natCount[pool[0].country] || 0) + 1;
       const target = ns.find(s => s.position === pos && s.isSub === isSub && !s.playerId);
       if (target) target.playerId = pool[0].id;
     }
@@ -351,7 +358,7 @@ export default function TeamPage() {
                     <img src={`/api/player-image/${p.id}`} alt={p.name} width={34} height={34} style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0, background: "var(--ground)", border: "1px solid var(--border)", objectFit: "cover", objectPosition: "top" }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: "var(--t-sm)", fontWeight: 600, color: "var(--navy)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}{inSquad && <span style={{ marginLeft: "0.4rem", color: "var(--pos-def)", fontSize: "0.65rem" }}>✓</span>}</p>
-                      <p style={{ fontSize: "var(--t-xs)", color: "var(--muted)" }}>{getFlag(p.country)} {p.clubTeam}</p>
+                      <p style={{ fontSize: "var(--t-xs)", color: "var(--muted)" }}>{getFlag(p.country)} {p.clubTeam || p.country}</p>
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
                       <span className={`pos ${posClass[p.position]}`}>{p.position}</span>
@@ -365,7 +372,7 @@ export default function TeamPage() {
         </div>
 
         <p style={{ fontSize: "var(--t-xs)", color: "var(--subtle)", textAlign: "center", marginTop: "0.875rem" }}>
-          <strong style={{ color: "var(--maroon)" }}>C</strong> = Captain (×2) · <strong style={{ color: "var(--navy)" }}>V</strong> = Vice-captain (×1.5) · Click a player to set roles or swap
+          <strong style={{ color: "var(--maroon)" }}>C</strong> = Captain (×2) · <strong style={{ color: "var(--navy)" }}>V</strong> = Vice-captain (×1.5) · Max 3 players per nation · Click a player to set roles or swap
         </p>
       </div>
 
